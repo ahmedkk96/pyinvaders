@@ -2,27 +2,24 @@ import pygame
 from pygame.math import Vector2
 
 
+def Rect_From_Center(pos, size):
+        tx1 = pos[0] - size[0]/2
+        ty1 = pos[1] - size[1]/2
+        return pygame.rect.Rect(tx1, ty1, size[0], size[1])
+
+
 class Sprite(pygame.sprite.Sprite):
     def __init__(self, img):
         super(Sprite, self).__init__()
-        self.pos = Vector2(0, 0)
         self.image = img
-        self.rect = img.get_rect()
 
-    def draw(self, targ_surface):
+    def draw(self, targ_surface, pos):
         # Converting topleft to center
-        size_x, size_y = self.image.get_size()
+        rect = Rect_From_Center(pos, self.image.get_size())
+        targ_surface.blit(self.image, rect)
 
-        tx1 = self.pos[0] - size_x/2
-        ty1 = self.pos[1] - size_y/2
-        tx2 = size_x
-        ty2 = size_y
-
-        trect = pygame.rect.Rect(tx1, ty1, tx2, ty2)
-
-        self.rect = trect
-
-        targ_surface.blit(self.image, (tx1, ty1))
+    def update(self, delta_time):
+        pass
 
 
 class ASprite(Sprite):
@@ -51,9 +48,9 @@ class ASprite(Sprite):
             sub_surface.blit(img, (0, 0), source)
             self._imgs.append(sub_surface)
 
-    def draw(self, target_surface):
+    def draw(self, target_surface, pos):
         self.image = self._imgs[self.frame]
-        Sprite.draw(self, target_surface)
+        Sprite.draw(self, target_surface, pos)
 
     def update(self, delta_time):
         if self.animate:
@@ -67,22 +64,36 @@ class ASprite(Sprite):
 
 
 class GameObject:
-    def __init__(self):
-        self.pos = pygame.math.Vector2(0, 0)
-        self.size = pygame.math.Vector2(0, 0)
-        self.sprite = None
-
+    def __init__(self,
+                 pos=pygame.math.Vector2(0, 0),
+                 size=pygame.math.Vector2(32, 32)):
+        self.pos = pos
+        self.size = size
         self.speed = pygame.math.Vector2(0, 0)
 
-    def draw(self, surface):
-        self.sprite.pos = self.pos
-        self.sprite.draw(surface)
-
     def update(self, delta_time):
-        self.sprite.update(delta_time)
-
         # Movement
         self.pos += self.speed * delta_time
 
-    def set_size_from_sprite(self):
-        self.size = self.sprite.image.get_size()
+    def get_rect(self):
+        return Rect_From_Center(self.pos, self.size)
+
+    def collides(self, other):
+        return self.get_rect().colliderect(other.get_rect())
+
+
+class SpriteGameObject(GameObject):
+    def __init__(self,
+                 sprite,
+                 pos=pygame.math.Vector2(0, 0),
+                 size=pygame.math.Vector2(32, 32)):
+        GameObject.__init__(self, pos, size)
+        self.sprite = sprite
+        self.size = sprite.image.get_size()
+
+    def draw(self, target_surf):
+        self.sprite.draw(target_surf, self.pos)
+
+    def update(self, delta_time):
+        GameObject.update(self, delta_time)
+        self.sprite.update(delta_time)

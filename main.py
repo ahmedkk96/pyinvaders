@@ -21,14 +21,11 @@ playerimg = pygame.image.load('sprites/coin_copper.png').convert()
 player_sprite = ASprite(playerimg, 8)
 player_sprite.animation_fps = 15
 player_sprite.animate = True
-player = GameObject()
-player.sprite = player_sprite
-player.set_size_from_sprite()
+player = SpriteGameObject(player_sprite)
 
-bullet = GameObject()
+bullet = SpriteGameObject(player_sprite)
 bullet.pos.x = 200
 bullet.speed = pygame.math.Vector2(20, 50)
-bullet.sprite = player_sprite
 
 clock = pygame.time.Clock()
 
@@ -62,7 +59,7 @@ while running:
     bullet.update(delta_time)
     bullet.draw(display)
 
-    collision = pygame.sprite.collide_rect(player.sprite, bullet.sprite)
+    collision = player.collides(bullet)
 
     debugger.clear()
 
@@ -72,7 +69,7 @@ while running:
     debugger.add('Mouse Y = {}'.format(mouse_y))
     debugger.add('Frame: {}'.format(player.sprite.frame))
     debugger.add('Collision {}'.format(collision))
-    debugger.add('Rect1 {}'.format(bullet.sprite.rect))
+    debugger.add('Rect1 {}'.format(bullet.get_rect()))
 
     debugger.render(display)
 
