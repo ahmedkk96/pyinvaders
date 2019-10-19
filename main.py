@@ -6,26 +6,25 @@ import TextDebugger
 
 from pygame.locals import (
     QUIT,
+    MOUSEBUTTONDOWN,
+    MOUSEBUTTONUP
 )
 
 
-RES_X = 512
-RES_Y = 512
+RES_X = 1280
+RES_Y = 720
 
 
 pygame.init()
 display = pygame.display.set_mode(size=(RES_X, RES_Y))
+pygame.mouse.set_visible(False)
 
-playerimg = pygame.image.load('sprites/coin_copper.png').convert()
+playerimg = pygame.image.load('sprites/player.png').convert()
 
-player_sprite = ASprite(playerimg, 8)
+player_sprite = ASprite(playerimg, 2)
 player_sprite.animation_fps = 15
 player_sprite.animate = True
-player = SpriteGameObject(player_sprite)
-
-bullet = SpriteGameObject(player_sprite)
-bullet.pos.x = 200
-bullet.speed = pygame.math.Vector2(20, 50)
+player = Player(player_sprite)
 
 clock = pygame.time.Clock()
 
@@ -35,11 +34,21 @@ fps = 0
 running = True
 lastdt = datetime.datetime.now()
 
+# array containing all gameobjects
+world = []
+world.append(player)
+shoot = True
 while running:
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
             print('Goodbyte')
+        elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+            if shoot:
+                world.append(player.shoot())
+                shoot = False
+        elif event.type == MOUSEBUTTONUP and event.button == 1:
+            shoot = True
 
     dt = datetime.datetime.now()
     delta_time = (dt - lastdt).total_seconds()
@@ -51,15 +60,10 @@ while running:
     display.fill((0, 0, 0))
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
-    player.pos = pygame.math.Vector2(mouse_x, mouse_y)
 
-    player.update(delta_time)
-    player.draw(display)
-
-    bullet.update(delta_time)
-    bullet.draw(display)
-
-    collision = player.collides(bullet)
+    for gobj in world:
+        gobj.update(delta_time)
+        gobj.draw(display)
 
     debugger.clear()
 
@@ -67,9 +71,6 @@ while running:
     debugger.add(str(fps))
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
-    debugger.add('Frame: {}'.format(player.sprite.frame))
-    debugger.add('Collision {}'.format(collision))
-    debugger.add('Rect1 {}'.format(bullet.get_rect()))
 
     debugger.render(display)
 

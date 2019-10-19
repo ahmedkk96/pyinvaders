@@ -101,3 +101,30 @@ class SpriteGameObject(GameObject):
     def update(self, delta_time):
         GameObject.update(self, delta_time)
         self.sprite.update(delta_time)
+
+
+# Sprite image paths
+SPRITE_PLAYER = 'sprites/player.png'
+SPRITE_BULLET = 'data/PNG/Lasers/laserRed01.png'
+sprite_bullet = Sprite(pygame.image.load(SPRITE_BULLET))
+
+
+class Player(SpriteGameObject):
+    def __init__(self, sprite):
+        super(Player, self).__init__(sprite)
+        self.health = 100
+    
+    def update(self, delta_time):
+        SpriteGameObject.update(self, delta_time)
+        self.pos = Vector2(pygame.mouse.get_pos())
+
+    def shoot(self):
+        b = Bullet()
+        b.pos = self.pos
+        return b
+
+
+class Bullet(SpriteGameObject):
+    def __init__(self):
+        super(Bullet, self).__init__(sprite_bullet)
+        self.speed.y = -1000
