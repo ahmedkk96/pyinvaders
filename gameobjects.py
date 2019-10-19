@@ -83,6 +83,10 @@ class GameObject:
 
 
 class SpriteGameObject(GameObject):
+    ''' 
+    Implementation with sprite
+    which gets the size from it
+    '''
     def __init__(self,
                  sprite,
                  pos=pygame.math.Vector2(0, 0),
