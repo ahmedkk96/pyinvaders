@@ -7,6 +7,7 @@ class Sprite(pygame.sprite.Sprite):
         super(Sprite, self).__init__()
         self.pos = Vector2(0, 0)
         self.image = img
+        self.rect = img.get_rect()
 
     def draw(self, targ_surface):
         # Converting topleft to center
@@ -14,11 +15,14 @@ class Sprite(pygame.sprite.Sprite):
 
         tx1 = self.pos[0] - size_x/2
         ty1 = self.pos[1] - size_y/2
-        tx2 = tx1 + size_x
-        ty2 = ty1 + size_y
+        tx2 = size_x
+        ty2 = size_y
 
         trect = pygame.rect.Rect(tx1, ty1, tx2, ty2)
-        targ_surface.blit(self.image, trect)
+
+        self.rect = trect
+
+        targ_surface.blit(self.image, (tx1, ty1))
 
 
 class ASprite(Sprite):
