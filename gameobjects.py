@@ -65,11 +65,11 @@ class ASprite(Sprite):
 
 class GameObject:
     def __init__(self,
-                 pos=pygame.math.Vector2(0, 0),
-                 size=pygame.math.Vector2(32, 32)):
+                 pos=Vector2(0, 0),
+                 size=Vector2(32, 32)):
         self.pos = pos
         self.size = size
-        self.speed = pygame.math.Vector2(0, 0)
+        self.speed = Vector2(0, 0)
 
     def update(self, delta_time):
         # Movement
@@ -83,14 +83,14 @@ class GameObject:
 
 
 class SpriteGameObject(GameObject):
-    ''' 
+    '''
     Implementation with sprite
     which gets the size from it
     '''
     def __init__(self,
                  sprite,
-                 pos=pygame.math.Vector2(0, 0),
-                 size=pygame.math.Vector2(32, 32)):
+                 pos=Vector2(0, 0),
+                 size=Vector2(32, 32)):
         GameObject.__init__(self, pos, size)
         self.sprite = sprite
         self.size = sprite.image.get_size()
