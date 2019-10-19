@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import pygame
 import datetime
-from gameobjects import ASprite
+from gameobjects import *
 import TextDebugger
 
 from pygame.locals import (
@@ -18,9 +18,14 @@ display = pygame.display.set_mode(size=(RES_X, RES_Y))
 
 playerimg = pygame.image.load('sprites/coin_copper.png').convert()
 
-player = ASprite(playerimg, 8)
-player.animation_fps = 15
-player.animate = True
+player_sprite = ASprite(playerimg, 8)
+player_sprite.animation_fps = 15
+player_sprite.animate = True
+player = GameObject()
+player.sprite = player_sprite
+player.set_size_from_sprite()
+print(player.size)
+
 
 clock = pygame.time.Clock()
 
@@ -37,8 +42,9 @@ while running:
             print('Goodbyte')
 
     dt = datetime.datetime.now()
-    delta_time = (dt - lastdt).microseconds / 1000
-    fps = int(1000 / delta_time)
+    delta_time = (dt - lastdt).total_seconds()
+
+    fps = int(1 / delta_time)
     lastdt = dt
 
     # Fill background
@@ -56,7 +62,7 @@ while running:
     debugger.add(str(fps))
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
-    debugger.add('Frame: {}'.format(player.frame))
+    debugger.add('Frame: {}'.format(player.sprite.frame))
 
     debugger.render(display)
 

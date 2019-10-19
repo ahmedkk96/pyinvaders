@@ -1,0 +1,10 @@
+Player (health, shooting, score)
+Enemies (health, random shooting & movement)
+Bullets (speed, hit_damage)
+Collision detection
+Upgrades
+
+GameObject
+	speed
+	
+Resources loader
