@@ -1,14 +1,8 @@
 #!/usr/bin/python3
 import pygame
-import datetime
 from gameobjects import *
+import controller
 import TextDebugger
-
-from pygame.locals import (
-    QUIT,
-    MOUSEBUTTONDOWN,
-    MOUSEBUTTONUP
-)
 
 
 RES_X = 1280
@@ -30,40 +24,23 @@ clock = pygame.time.Clock()
 
 debugger = TextDebugger.Renderer()
 
-fps = 0
-running = True
-lastdt = datetime.datetime.now()
 
-# array containing all gameobjects
-world = []
-world.append(player)
+controller.world.append(player, 'player')
 shoot = True
-while running:
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            running = False
-            print('Goodbyte')
-        elif event.type == MOUSEBUTTONDOWN and event.button == 1:
-            if shoot:
-                world.append(player.shoot())
-                shoot = False
-        elif event.type == MOUSEBUTTONUP and event.button == 1:
-            shoot = True
 
-    dt = datetime.datetime.now()
-    delta_time = (dt - lastdt).total_seconds()
+updater = controller.Updater()
+logic = controller.Logic()
 
-    fps = int(1 / delta_time)
-    lastdt = dt
+while True:
+    if not updater.pygame_events():
+        break
+
+    dt = updater.update_world(display)
+
+    fps = int(1 / dt)
 
     # Fill background
-    display.fill((0, 0, 0))
-
     mouse_x, mouse_y = pygame.mouse.get_pos()
-
-    for gobj in world:
-        gobj.update(delta_time)
-        gobj.draw(display)
 
     debugger.clear()
 

@@ -113,7 +113,7 @@ class Player(SpriteGameObject):
     def __init__(self, sprite):
         super(Player, self).__init__(sprite)
         self.health = 100
-    
+
     def update(self, delta_time):
         SpriteGameObject.update(self, delta_time)
         self.pos = Vector2(pygame.mouse.get_pos())
