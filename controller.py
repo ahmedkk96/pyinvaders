@@ -97,11 +97,10 @@ class Logic():
 
 
 class Game():
-    def __init__(self, player):
+    def __init__(self, world):
         self.keyboard = Input()
         self.mouse = Input()
-        self.world = World()
-        self.world.append(player, 'player')
+        self.world = world
         self.logic = Logic(self.keyboard, self.mouse, self.world)
         self._lastdt = datetime.datetime.now()
 

@@ -25,7 +25,9 @@ clock = pygame.time.Clock()
 debugger = TextDebugger.Renderer()
 
 
-game = controller.Game(player)
+world = controller.World()
+world.append(player, 'player')
+game = controller.Game(world)
 
 while True:
     if not game.pygame_events():
