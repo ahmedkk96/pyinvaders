@@ -69,6 +69,9 @@ class World():
             return self._objects[type_name]
         return self._objects[type_name]
 
+    def get_main_dic(self):
+        return self._objects
+
 
 class Logic():
     def __init__(self, keyboard, mouse, world):

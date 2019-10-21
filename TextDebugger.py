@@ -4,7 +4,7 @@ import pygame
 class Renderer():
     def __init__(self, font_size=26):
         self.font = pygame.font.Font(None, font_size)
-        self._padding = font_size + 2
+        self._padding = font_size
         self.lines = []
 
     def clear(self):

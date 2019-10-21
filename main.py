@@ -26,8 +26,6 @@ debugger = TextDebugger.Renderer()
 
 
 game = controller.Game(player)
-shoot = True
-
 
 while True:
     if not game.pygame_events():
@@ -46,6 +44,9 @@ while True:
     debugger.add(str(fps))
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
+    dic = game.world.get_main_dic().items()
+    for type_name, array in dic:
+        debugger.add('{}: {}'.format(type_name, len(array)))
 
     debugger.render(display)
 
