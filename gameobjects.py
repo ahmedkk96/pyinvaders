@@ -23,30 +23,36 @@ class Sprite(pygame.sprite.Sprite):
 
 
 class ASprite(Sprite):
-    def __init__(self, img, steps_count=1):
+    def __init__(self, img, tiles_x, tiles_y=1):
         self.frame = 0
         self._internal_frame = 0.0  # For animation
-        self.frames_count = steps_count
+        self.frames_count = tiles_x * tiles_y
         self.animate = False
         self.animation_fps = 0
-        self._sub_images(img, steps_count)
+        self._sub_images(img, tiles_x, tiles_y)
         super(ASprite, self).__init__(self._imgs[0])
 
-    def _sub_images(self, img, steps_count):
+    def _sub_images(self, img, tiles_x, tiles_y):
         # Divides the sheet into sub frames
-        self._framw_width = img.get_width() / steps_count
-        self._frame_height = img.get_height()
+        self._framw_width = img.get_width() / tiles_x
+        self._frame_height = img.get_height() / tiles_y
         self._imgs = []
 
-        for i in range(0, steps_count):
-            sub_surface = pygame.surface.Surface((self._framw_width,
-                                                 self._frame_height))
-            x1 = i * self._framw_width
-            x2 = self._framw_width  # Area rectangle
-            source = pygame.rect.Rect(x1, 0, x2, self._frame_height)
+        for y in range(0, tiles_y):
+            y1 = y * self._frame_height
+            for x in range(0, tiles_x):
+                sub_surface = pygame.surface.Surface(
+                    (self._framw_width, self._frame_height),
+                    pygame.SRCALPHA, 32)
 
-            sub_surface.blit(img, (0, 0), source)
-            self._imgs.append(sub_surface)
+                x1 = x * self._framw_width
+
+                source = pygame.rect.Rect(
+                                x1, y1,
+                                self._framw_width, self._frame_height)
+
+                sub_surface.blit(img, (0, 0), source)
+                self._imgs.append(sub_surface)
 
     def draw(self, target_surface, pos):
         self.image = self._imgs[self.frame]
@@ -134,3 +140,8 @@ class Enemy(SpriteGameObject):
     def __init__(self, sprite):
         super(Enemy, self).__init__(sprite, (512, 32))
         self.health = 100
+
+
+class Explosion(SpriteGameObject):
+    def __init__(self, sprite, pos):
+        super(Explosion, self).__init__(sprite, pos)

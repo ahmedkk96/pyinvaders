@@ -129,7 +129,7 @@ class Game():
         dt = datetime.datetime.now()
         delta_time = (dt - self._lastdt).total_seconds()
 
-        display.fill((0, 0, 0))
+        display.fill((0, 30, 30))
 
         global world
         for gobj in self.world.get_all_objects():
