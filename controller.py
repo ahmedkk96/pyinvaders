@@ -78,6 +78,7 @@ class Logic():
         self._can_shoot = True
         self._player = world.get_by_type('player')[0]
         self._bullets = world.get_by_type('bullet')
+        self._enemies = world.get_by_type('enemy')
         self._world = world
 
         mouse.register(1, self.shoot)
@@ -94,6 +95,13 @@ class Logic():
         for bullet in self._bullets:
             if bullet.pos.y < 0:
                 self._world.remove(bullet)
+            else:
+                for enemy in self._enemies:
+                    if bullet.collides(enemy):
+                        enemy.health -= 10
+                        self._world.remove(bullet)
+                        if enemy.health <= 0:
+                            self._world.remove(enemy)
 
 
 class Game():

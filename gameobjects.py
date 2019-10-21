@@ -128,3 +128,9 @@ class Bullet(SpriteGameObject):
     def __init__(self):
         super(Bullet, self).__init__(sprite_bullet)
         self.speed.y = -1000
+
+
+class Enemy(SpriteGameObject):
+    def __init__(self, sprite):
+        super(Enemy, self).__init__(sprite, (512, 32))
+        self.health = 100

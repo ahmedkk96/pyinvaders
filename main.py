@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import pygame
-from gameobjects import *
+from gameobjects import Sprite, ASprite, Player, Enemy
 import controller
 import TextDebugger
 
@@ -20,6 +20,15 @@ player_sprite.animation_fps = 15
 player_sprite.animate = True
 player = Player(player_sprite)
 
+
+def sprite_from_path(filename):
+    img = pygame.image.load(filename).convert()
+    return Sprite(img)
+
+
+enemy_sprite = sprite_from_path('sprites/enemyRed2.png')
+enemy = Enemy(enemy_sprite)
+
 clock = pygame.time.Clock()
 
 debugger = TextDebugger.Renderer()
@@ -27,6 +36,7 @@ debugger = TextDebugger.Renderer()
 
 world = controller.World()
 world.append(player, 'player')
+world.append(enemy, 'enemy')
 game = controller.Game(world)
 
 while True:
