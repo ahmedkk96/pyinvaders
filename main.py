@@ -25,17 +25,15 @@ clock = pygame.time.Clock()
 debugger = TextDebugger.Renderer()
 
 
-controller.world.append(player, 'player')
+game = controller.Game(player)
 shoot = True
 
-updater = controller.Updater()
-logic = controller.Logic()
 
 while True:
-    if not updater.pygame_events():
+    if not game.pygame_events():
         break
 
-    dt = updater.update_world(display)
+    dt = game.update_world(display)
 
     fps = int(1 / dt)
 

@@ -61,28 +61,45 @@ class World():
         self._all_objects.remove(object)
         del self._obj_parents[object]
 
-    def get_of_type(self, type_name):
+    def get_by_type(self, type_name):
+        if type_name not in self._objects:
+            # Create the requested type_name and
+            # return it as an empty array
+            self._objects[type_name] = []
+            return self._objects[type_name]
         return self._objects[type_name]
 
 
 class Logic():
-    def __init__(self):
+    def __init__(self, keyboard, mouse, world):
         self._can_shoot = True
-        self._player = world.get_of_type('player')[0]
+        self._player = world.get_by_type('player')[0]
+        self._bullets = world.get_by_type('bullet')
+        self._world = world
 
         mouse.register(1, self.shoot)
 
     def shoot(self, down):
         if down:
             if self._can_shoot:
-                world.append(self._player.shoot(), 'bullet')
+                self._world.append(self._player.shoot(), 'bullet')
                 self._can_shoot = False
         else:
             self._can_shoot = True
 
+    def update(self):
+        for bullet in self._bullets:
+            if bullet.pos.y < 0:
+                self._world.remove(bullet)
 
-class Updater():
-    def __init__(self):
+
+class Game():
+    def __init__(self, player):
+        self.keyboard = Input()
+        self.mouse = Input()
+        self.world = World()
+        self.world.append(player, 'player')
+        self.logic = Logic(self.keyboard, self.mouse, self.world)
         self._lastdt = datetime.datetime.now()
 
     def pygame_events(self):
@@ -90,11 +107,11 @@ class Updater():
             if event.type == QUIT:
                 return False
             elif event.type == MOUSEBUTTONDOWN:
-                mouse.on_key(event.button, True)
+                self.mouse.on_key(event.button, True)
             elif event.type == MOUSEBUTTONUP:
-                mouse.on_key(event.button, False)
+                self.mouse.on_key(event.button, False)
             elif event.type == KEYUP or event.type == KEYDOWN:
-                keyboard.on_key(event.key, event.type == KEYDOWN)
+                self.keyboard.on_key(event.key, event.type == KEYDOWN)
 
         return True
 
@@ -105,14 +122,11 @@ class Updater():
         display.fill((0, 0, 0))
 
         global world
-        for gobj in world.get_all_objects():
+        for gobj in self.world.get_all_objects():
             gobj.update(delta_time)
             gobj.draw(display)
 
+        self.logic.update()
+
         self._lastdt = dt
         return delta_time
-
-
-keyboard = Input()
-mouse = Input()
-world = World()
