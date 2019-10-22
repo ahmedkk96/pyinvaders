@@ -16,7 +16,7 @@ pygame.mouse.set_visible(False)
 playerimg = pygame.image.load('sprites/player.png').convert_alpha()
 
 player_sprite = ASprite(playerimg, 2, 1)
-player_sprite.animation_fps = 15
+player_sprite.fps = 15
 player_sprite.animate = True
 player = Player(player_sprite)
 
@@ -48,7 +48,15 @@ world.append(player, 'player')
 world.append(enemy, 'enemy')
 world.append(explos_test, 'explosion')
 game = controller.Game(world)
+game.animator.add_object_loop(player)
 
+
+def callback(obj):
+    world.remove(obj)
+    game.animator.remove_object(player)
+
+
+game.animator.add_object_onetime(explos_test, callback)
 while True:
     if not game.pygame_events():
         break

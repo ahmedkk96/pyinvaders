@@ -18,18 +18,13 @@ class Sprite(pygame.sprite.Sprite):
         rect = Rect_From_Center(pos, self.image.get_size())
         targ_surface.blit(self.image, rect)
 
-    def update(self, delta_time):
-        pass
-
 
 class ASprite(Sprite):
     def __init__(self, img, tiles_x, tiles_y=1):
         self.frame = 0
-        self._internal_frame = 0.0  # For animation
         self.frames_count = tiles_x * tiles_y
-        self.animate = False
-        self.animation_fps = 0
         self._sub_images(img, tiles_x, tiles_y)
+        self.fps = 30
         super(ASprite, self).__init__(self._imgs[0])
 
     def _sub_images(self, img, tiles_x, tiles_y):
@@ -57,16 +52,6 @@ class ASprite(Sprite):
     def draw(self, target_surface, pos):
         self.image = self._imgs[self.frame]
         Sprite.draw(self, target_surface, pos)
-
-    def update(self, delta_time):
-        if self.animate:
-            self._internal_frame += delta_time * (self.animation_fps)
-            # Rounding will make us lose frames over time
-
-            while self._internal_frame >= self.frames_count:
-                self._internal_frame -= self.frames_count
-
-            self.frame = int(self._internal_frame)  # Floor
 
 
 class GameObject:
@@ -103,10 +88,6 @@ class SpriteGameObject(GameObject):
 
     def draw(self, target_surf):
         self.sprite.draw(target_surf, self.pos)
-
-    def update(self, delta_time):
-        GameObject.update(self, delta_time)
-        self.sprite.update(delta_time)
 
 
 # Sprite image paths

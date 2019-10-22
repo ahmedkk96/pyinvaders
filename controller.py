@@ -104,12 +104,62 @@ class Logic():
                             self._world.remove(enemy)
 
 
+class Animator():
+    def __init__(self):
+        self._objects_loop = []  # Keep animating
+        self._objects_onetime = {}  # {object, callback}
+
+    def update(self, delta_time):
+        for obj in self._objects_loop:
+            self._update_obj(obj, delta_time)
+
+        to_remove = []
+        for obj, callback in self._objects_onetime.items():
+            if self._update_obj(obj, delta_time):
+                to_remove.append(obj)
+                callback(obj)
+
+        for r in to_remove:
+            del self._objects_onetime[r]
+
+    def _update_obj(self, obj, delta_time):
+        '''
+        Returns True when replaying.
+        '''
+        asprite = obj.sprite
+        fps = asprite.fps
+        asprite.internal_frame += delta_time * fps
+        if asprite.internal_frame >= 1:
+            delta_frames = int(asprite.internal_frame)
+            asprite.internal_frame -= delta_frames
+            asprite.frame += delta_frames
+            if asprite.frame >= asprite.frames_count:
+                asprite.frame %= asprite.frames_count
+                return True
+        return False
+
+    def add_object_loop(self, object):
+        if object not in self._objects_loop:
+            object.sprite.internal_frame = 0
+            self._objects_loop.append(object)
+
+    def remove_object(self, object):
+        if object in self._objects_loop:
+            self._objects_loop.remove(object)
+
+    def add_object_onetime(self, object, callback):
+        if object not in self._objects_onetime:
+            object.sprite.internal_frame = 0
+            self._objects_onetime[object] = callback
+
+
 class Game():
     def __init__(self, world):
         self.keyboard = Input()
         self.mouse = Input()
         self.world = world
         self.logic = Logic(self.keyboard, self.mouse, self.world)
+        self.animator = Animator()
         self._lastdt = datetime.datetime.now()
 
     def pygame_events(self):
@@ -131,7 +181,8 @@ class Game():
 
         display.fill((0, 30, 30))
 
-        global world
+        self.animator.update(delta_time)
+
         for gobj in self.world.get_all_objects():
             gobj.update(delta_time)
             gobj.draw(display)
