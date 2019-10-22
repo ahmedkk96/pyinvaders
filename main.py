@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import pygame
-from gameobjects import Sprite, ASprite, Player, Enemy, Explosion
+from gameobjects import Sprite, ASprite, Player, Enemy
 import controller
 import TextDebugger
 
@@ -25,18 +25,9 @@ def sprite_from_path(filename):
     img = pygame.image.load(filename).convert_alpha()
     return Sprite(img)
 
-def asprite_from_path(filename, tx, ty):
-    img = pygame.image.load(filename).convert_alpha()
-    return ASprite(img, tx, ty)
-
 
 enemy_sprite = sprite_from_path('sprites/enemyRed2.png')
 enemy = Enemy(enemy_sprite)
-
-exlos_sprite = asprite_from_path('sprites/explosion.png', 8, 8)
-exlos_sprite.animate = True
-exlos_sprite.animation_fps = 30
-explos_test = Explosion(exlos_sprite, (250, 250))
 
 clock = pygame.time.Clock()
 
@@ -46,22 +37,21 @@ debugger = TextDebugger.Renderer()
 world = controller.World()
 world.append(player, 'player')
 world.append(enemy, 'enemy')
-world.append(explos_test, 'explosion')
 game = controller.Game(world)
 game.animator.add_object_loop(player)
-
+logic = controller.Logic(game)
 
 def callback(obj):
     world.remove(obj)
     game.animator.remove_object(player)
 
 
-game.animator.add_object_onetime(explos_test, callback)
 while True:
     if not game.pygame_events():
         break
 
     dt = game.update_world(display)
+    logic.update()
 
     fps = int(1 / dt)
 

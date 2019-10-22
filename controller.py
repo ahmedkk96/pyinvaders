@@ -1,4 +1,5 @@
 import pygame
+import gameobjects
 from pygame.locals import (
     QUIT,
     MOUSEBUTTONDOWN,
@@ -7,6 +8,27 @@ from pygame.locals import (
     KEYUP
 )
 import datetime
+
+
+class ResourcesLoader():
+    GAME_SPRITES = {'explosion': {'path': 'sprites/explosion.png',
+                                 'tx': 8, 'ty': 8}}
+
+    def load_sprite(name):
+        data = ResourcesLoader.GAME_SPRITES[name]
+        if data['tx'] + data['ty'] > 2:
+            return ResourcesLoader.asprite_from_path(
+                        data['path'], data['tx'], data['ty'])
+        else:
+            return ResourcesLoader.asprite_from_path(data['path'])
+
+    def sprite_from_path(filename):
+        img = pygame.image.load(filename).convert_alpha()
+        return gameobjects.Sprite(img)
+
+    def asprite_from_path(filename, tx, ty):
+        img = pygame.image.load(filename).convert_alpha()
+        return gameobjects.ASprite(img, tx, ty)
 
 
 class Input():
@@ -74,12 +96,16 @@ class World():
 
 
 class Logic():
-    def __init__(self, keyboard, mouse, world):
+    def __init__(self, game_manager):
         self._can_shoot = True
+        self._game_manager = game_manager
+        world = game_manager.world
+        mouse = game_manager.mouse
         self._player = world.get_by_type('player')[0]
         self._bullets = world.get_by_type('bullet')
         self._enemies = world.get_by_type('enemy')
         self._world = world
+        self._explosion_sprite = ResourcesLoader.load_sprite('explosion')
 
         mouse.register(1, self.shoot)
 
@@ -102,7 +128,14 @@ class Logic():
                         self._world.remove(bullet)
                         if enemy.health <= 0:
                             self._world.remove(enemy)
+                            exp = gameobjects.SpriteGameObject(self._explosion_sprite)
+                            exp.pos = enemy.pos
+                            self._game_manager.world.append(exp, 'explosion')
+                            self._game_manager.animator.add_object_onetime(exp, self.exp_cb)
 
+    def exp_cb(self, exp):
+        self._game_manager.world.remove(exp)
+                            
 
 class Animator():
     def __init__(self):
@@ -158,7 +191,6 @@ class Game():
         self.keyboard = Input()
         self.mouse = Input()
         self.world = world
-        self.logic = Logic(self.keyboard, self.mouse, self.world)
         self.animator = Animator()
         self._lastdt = datetime.datetime.now()
 
@@ -186,8 +218,6 @@ class Game():
         for gobj in self.world.get_all_objects():
             gobj.update(delta_time)
             gobj.draw(display)
-
-        self.logic.update()
 
         self._lastdt = dt
         return delta_time
