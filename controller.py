@@ -149,7 +149,7 @@ class Logic():
                                            pos)
         self._game_manager.world.append(exp, 'explosion')
         self._game_manager.animator.add_object_onetime(exp, self._world.remove)
-              
+
 
 class Animator():
     def __init__(self):
@@ -201,10 +201,10 @@ class Animator():
 
 
 class Game():
-    def __init__(self, world):
+    def __init__(self):
         self.keyboard = Input()
         self.mouse = Input()
-        self.world = world
+        self.world = World()
         self.animator = Animator()
         self.res_load = ResourcesLoader()
         self._lastdt = datetime.datetime.now()
