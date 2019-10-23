@@ -12,7 +12,14 @@ import datetime
 
 class ResourcesLoader():
     GAME_SPRITES = {'explosion': {'path': 'sprites/explosion.png',
-                                 'tx': 8, 'ty': 8}}
+                                  'tx': 8, 'ty': 8}
+                                  }
+
+    def __init__(self):
+        self.sprites = {}
+        for name in ResourcesLoader.GAME_SPRITES.keys():
+            sprite = ResourcesLoader.load_sprite(name)
+            self.sprites[name] = sprite
 
     def load_sprite(name):
         data = ResourcesLoader.GAME_SPRITES[name]
@@ -20,7 +27,7 @@ class ResourcesLoader():
             return ResourcesLoader.asprite_from_path(
                         data['path'], data['tx'], data['ty'])
         else:
-            return ResourcesLoader.asprite_from_path(data['path'])
+            return ResourcesLoader.sprite_from_path(data['path'])
 
     def sprite_from_path(filename):
         img = pygame.image.load(filename).convert_alpha()
@@ -105,7 +112,7 @@ class Logic():
         self._bullets = world.get_by_type('bullet')
         self._enemies = world.get_by_type('enemy')
         self._world = world
-        self._explosion_sprite = ResourcesLoader.load_sprite('explosion')
+        self._res = game_manager.res_load
 
         mouse.register(1, self.shoot)
 
@@ -128,14 +135,15 @@ class Logic():
                         self._world.remove(bullet)
                         if enemy.health <= 0:
                             self._world.remove(enemy)
-                            exp = gameobjects.SpriteGameObject(self._explosion_sprite)
-                            exp.pos = enemy.pos
-                            self._game_manager.world.append(exp, 'explosion')
-                            self._game_manager.animator.add_object_onetime(exp, self.exp_cb)
+                            self._create_explosion(enemy.pos)
 
-    def exp_cb(self, exp):
-        self._game_manager.world.remove(exp)
-                            
+    def _create_explosion(self, pos):
+        exp_sprite = self._res.sprites['explosion']
+        exp = gameobjects.SpriteGameObject(exp_sprite,
+                                           pos)
+        self._game_manager.world.append(exp, 'explosion')
+        self._game_manager.animator.add_object_onetime(exp, self._world.remove)
+              
 
 class Animator():
     def __init__(self):
@@ -192,6 +200,7 @@ class Game():
         self.mouse = Input()
         self.world = world
         self.animator = Animator()
+        self.res_load = ResourcesLoader()
         self._lastdt = datetime.datetime.now()
 
     def pygame_events(self):
