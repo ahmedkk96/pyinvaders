@@ -21,19 +21,13 @@ class ResourcesLoader():
 
     def load_sprite(name):
         data = ResourcesLoader.GAME_SPRITES[name]
-        if data['tx'] + data['ty'] > 2:
-            return ResourcesLoader.asprite_from_path(
-                        data['path'], data['tx'], data['ty'])
-        else:
-            return ResourcesLoader.sprite_from_path(data['path'])
+        return ResourcesLoader.sprite_from_path(
+                data['path'], data['tx'], data['ty'])
 
-    def sprite_from_path(filename):
-        img = pygame.image.load(filename).convert_alpha()
-        return Sprite(img)
 
-    def asprite_from_path(filename, tx, ty):
+    def sprite_from_path(filename, tx, ty):
         img = pygame.image.load(filename).convert_alpha()
-        return ASprite(img, tx, ty)
+        return Sprite(img, tx, ty)
 
     def create_gameobject(type):
         sprite = ResourcesLoader.sprites[type.SPRITE_NAME]
@@ -47,25 +41,20 @@ def Rect_From_Center(pos, size):
 
 
 class Sprite(pygame.sprite.Sprite):
-    def __init__(self, img):
-        super(Sprite, self).__init__()
-        self.image = img
-
-    def draw(self, targ_surface, pos):
-        # Converting topleft to center
-        rect = Rect_From_Center(pos, self.image.get_size())
-        targ_surface.blit(self.image, rect)
-
-
-class ASprite(Sprite):
     def __init__(self, img, tiles_x, tiles_y=1):
+        super(Sprite, self).__init__()
         self.frame = 0
         self.frames_count = tiles_x * tiles_y
-        self._sub_images(img, tiles_x, tiles_y)
         self.fps = 30
-        super(ASprite, self).__init__(self._imgs[0])
+        self._sub_images(img, tiles_x, tiles_y)
+        self.image = self._imgs[self.frame]
 
     def _sub_images(self, img, tiles_x, tiles_y):
+        # non animated check:
+        if self.frames_count == 1:
+            self._imgs = [img]
+            return
+
         # Divides the sheet into sub frames
         self._framw_width = img.get_width() / tiles_x
         self._frame_height = img.get_height() / tiles_y
@@ -88,8 +77,9 @@ class ASprite(Sprite):
                 self._imgs.append(sub_surface)
 
     def draw(self, target_surface, pos):
-        self.image = self._imgs[self.frame]
-        Sprite.draw(self, target_surface, pos)
+        img = self._imgs[self.frame]
+        rect = Rect_From_Center(pos, img.get_size())
+        target_surface.blit(img, rect)
 
 
 class GameObject:
