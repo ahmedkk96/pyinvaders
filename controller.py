@@ -147,9 +147,9 @@ class Animator():
         if asprite.internal_frame >= 1:
             delta_frames = int(asprite.internal_frame)
             asprite.internal_frame -= delta_frames
-            asprite.frame += delta_frames
-            if asprite.frame >= asprite.frames_count:
-                asprite.frame %= asprite.frames_count
+            obj.frame += delta_frames
+            if obj.frame >= asprite.frames_count:
+                obj.frame %= asprite.frames_count
                 return True
         return False
 

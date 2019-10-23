@@ -43,11 +43,10 @@ def Rect_From_Center(pos, size):
 class Sprite(pygame.sprite.Sprite):
     def __init__(self, img, tiles_x, tiles_y=1):
         super(Sprite, self).__init__()
-        self.frame = 0
         self.frames_count = tiles_x * tiles_y
         self.fps = 30
         self._sub_images(img, tiles_x, tiles_y)
-        self.image = self._imgs[self.frame]
+        self.image = self._imgs[0]
 
     def _sub_images(self, img, tiles_x, tiles_y):
         # non animated check:
@@ -76,13 +75,15 @@ class Sprite(pygame.sprite.Sprite):
                 sub_surface.blit(img, (0, 0), source)
                 self._imgs.append(sub_surface)
 
-    def draw(self, target_surface, pos):
-        img = self._imgs[self.frame]
+    def draw(self, target_surface, pos, frame):
+        img = self._imgs[frame]
         rect = Rect_From_Center(pos, img.get_size())
         target_surface.blit(img, rect)
 
 
 class GameObject:
+    OBJECT_TYPE=''
+
     def __init__(self,
                  pos=Vector2(0, 0),
                  size=Vector2(32, 32)):
@@ -115,13 +116,15 @@ class SpriteGameObject(GameObject):
         GameObject.__init__(self, pos, size)
         self.sprite = sprite
         self.size = sprite.image.get_size()
+        self.frame = 0
 
     def draw(self, target_surf):
-        self.sprite.draw(target_surf, self.pos)
+        self.sprite.draw(target_surf, self.pos, self.frame)
 
 
 class Player(SpriteGameObject):
     SPRITE_NAME = 'player'
+    OBJECT_TYPE = 'player'
 
     def __init__(self, sprite):
         super(Player, self).__init__(sprite)
@@ -139,6 +142,7 @@ class Player(SpriteGameObject):
 
 class Bullet(SpriteGameObject):
     SPRITE_NAME = 'bullet'
+    OBJECT_TYPE = 'bullet'
 
     def __init__(self, sprite):
         super(Bullet, self).__init__(sprite)
@@ -147,6 +151,7 @@ class Bullet(SpriteGameObject):
 
 class Enemy(SpriteGameObject):
     SPRITE_NAME = 'enemy'
+    OBJECT_TYPE = 'enemy'
 
     def __init__(self, sprite):
         super(Enemy, self).__init__(sprite, (512, 32))
@@ -155,3 +160,4 @@ class Enemy(SpriteGameObject):
 
 class Explosion(SpriteGameObject):
     SPRITE_NAME = 'explosion'
+    OBJECT_NAME = 'explosion'
