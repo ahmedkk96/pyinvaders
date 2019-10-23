@@ -11,9 +11,15 @@ import datetime
 
 
 class ResourcesLoader():
-    GAME_SPRITES = {'explosion': {'path': 'sprites/explosion.png',
-                                  'tx': 8, 'ty': 8}
-                                  }
+    GAME_SPRITES = {'explosion':    {'path': 'sprites/explosion.png',
+                                     'tx': 8, 'ty': 8},
+                    'player':       {'path': 'sprites/player.png',
+                                     'tx': 2, 'ty': 1},
+                    'enemy':        {'path': 'sprites/enemyRed2.png',
+                                     'tx': 1, 'ty': 1},
+                    'bullet':       {'path': 'sprites/laserRed01.png',
+                                     'tx': 1, 'ty': 1}
+                    }
 
     def __init__(self):
         self.sprites = {}
