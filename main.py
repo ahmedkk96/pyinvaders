@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import pygame
-from gameobjects import Player, Enemy
+from gameobjects import Player, Enemy, ResourcesLoader
 import controller
 import TextDebugger
 
@@ -16,14 +16,12 @@ pygame.mouse.set_visible(False)
 
 def level_test(game_manager):
     world = game_manager.world
-    res = game_manager.res_load
-    enemy_sprite = res.sprites['enemy']
-    enemy = Enemy(enemy_sprite)
+    res = ResourcesLoader
+    enemy = res.create_gameobject(Enemy)
     world.append(enemy, 'enemy')
 
-    player_sprite = res.sprites['player']
-    player_sprite.fps = 15
-    player = Player(player_sprite)
+    player = res.create_gameobject(Player)
+    player.sprite.fps = 15
     world.append(player, 'player')
     game_manager.animator.add_object_loop(player)
 

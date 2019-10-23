@@ -2,6 +2,44 @@ import pygame
 from pygame.math import Vector2
 
 
+class ResourcesLoader():
+    GAME_SPRITES = {'explosion':    {'path': 'sprites/explosion.png',
+                                     'tx': 8, 'ty': 8},
+                    'player':       {'path': 'sprites/player.png',
+                                     'tx': 2, 'ty': 1},
+                    'enemy':        {'path': 'sprites/enemyRed2.png',
+                                     'tx': 1, 'ty': 1},
+                    'bullet':       {'path': 'sprites/laserRed01.png',
+                                     'tx': 1, 'ty': 1}
+                    }
+
+    def __init__():
+        ResourcesLoader.sprites = {}
+        for name in ResourcesLoader.GAME_SPRITES.keys():
+            sprite = ResourcesLoader.load_sprite(name)
+            ResourcesLoader.sprites[name] = sprite
+
+    def load_sprite(name):
+        data = ResourcesLoader.GAME_SPRITES[name]
+        if data['tx'] + data['ty'] > 2:
+            return ResourcesLoader.asprite_from_path(
+                        data['path'], data['tx'], data['ty'])
+        else:
+            return ResourcesLoader.sprite_from_path(data['path'])
+
+    def sprite_from_path(filename):
+        img = pygame.image.load(filename).convert_alpha()
+        return Sprite(img)
+
+    def asprite_from_path(filename, tx, ty):
+        img = pygame.image.load(filename).convert_alpha()
+        return ASprite(img, tx, ty)
+
+    def create_gameobject(type):
+        sprite = ResourcesLoader.sprites[type.SPRITE_NAME]
+        return type(sprite)
+
+
 def Rect_From_Center(pos, size):
         tx1 = pos[0] - size[0]/2
         ty1 = pos[1] - size[1]/2
@@ -78,6 +116,8 @@ class SpriteGameObject(GameObject):
     Implementation with sprite
     which gets the size from it
     '''
+    SPRITE_NAME = ''
+
     def __init__(self,
                  sprite,
                  pos=Vector2(0, 0),
@@ -90,13 +130,9 @@ class SpriteGameObject(GameObject):
         self.sprite.draw(target_surf, self.pos)
 
 
-# Sprite image paths
-SPRITE_PLAYER = 'sprites/player.png'
-SPRITE_BULLET = 'data/PNG/Lasers/laserRed01.png'
-sprite_bullet = Sprite(pygame.image.load(SPRITE_BULLET))
-
-
 class Player(SpriteGameObject):
+    SPRITE_NAME = 'player'
+
     def __init__(self, sprite):
         super(Player, self).__init__(sprite)
         self.health = 100
@@ -106,23 +142,26 @@ class Player(SpriteGameObject):
         self.pos = Vector2(pygame.mouse.get_pos())
 
     def shoot(self):
-        b = Bullet()
+        b = ResourcesLoader.create_gameobject(Bullet)
         b.pos = self.pos
         return b
 
 
 class Bullet(SpriteGameObject):
-    def __init__(self):
-        super(Bullet, self).__init__(sprite_bullet)
+    SPRITE_NAME = 'bullet'
+
+    def __init__(self, sprite):
+        super(Bullet, self).__init__(sprite)
         self.speed.y = -1000
 
 
 class Enemy(SpriteGameObject):
+    SPRITE_NAME = 'enemy'
+
     def __init__(self, sprite):
         super(Enemy, self).__init__(sprite, (512, 32))
         self.health = 100
 
 
 class Explosion(SpriteGameObject):
-    def __init__(self, sprite, pos):
-        super(Explosion, self).__init__(sprite, pos)
+    SPRITE_NAME = 'explosion'
