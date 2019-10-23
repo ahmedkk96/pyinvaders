@@ -8,6 +8,7 @@ from pygame.locals import (
     KEYUP
 )
 import datetime
+import random
 
 
 class Input():
@@ -83,9 +84,12 @@ class Logic():
         self._player = world.get_by_type('player')[0]
         self._bullets = world.get_by_type('bullet')
         self._enemies = world.get_by_type('enemy')
+        self._e_bullets = world.get_by_type('enemy_bullet')
         self._world = world
         self._res = gameobjects.ResourcesLoader
         self.score = 0
+
+        self._e_shoot_timeout = 1
 
         mouse.register(1, self.shoot)
 
@@ -97,9 +101,11 @@ class Logic():
         else:
             self._can_shoot = True
 
-    def update(self):
+    def update(self, delta_time):
         self._update_player_pos()
         self._check_player_bullets()
+        self._enemy_shoot(delta_time)
+        self._check_enemy_bullets()
 
     def _create_explosion(self, pos):
         exp = self._game.create_add_go(gameobjects.Explosion)
@@ -119,9 +125,29 @@ class Logic():
                             self._create_explosion(enemy.pos)
                             self.score += enemy.SCORE
 
+    def _check_enemy_bullets(self):
+        for bullet in self._e_bullets:
+            if bullet.pos.y > 1280:  # Fix this
+                self._world.remove(bullet)
+            else:
+                if bullet.collides(self._player):
+                    self._world.remove(bullet)
+                    if self._player.take_damage(bullet.DAMAGE):
+                        print('You\'ve lost')
+
     def _update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
         self._player.pos = pygame.math.Vector2(mouse_pos)
+
+    def _enemy_shoot(self, delta_time):
+        self._e_shoot_timeout -= delta_time
+        if self._e_shoot_timeout <= 0:
+            num_of_enemies = random.randint(0, 2)
+            for i in range(0, num_of_enemies):
+                enemies_count = len(self._enemies) - 1
+                enemy = self._enemies[random.randint(0, enemies_count)]
+                self._game.add_go(enemy.shoot())
+            self._e_shoot_timeout = 1
 
 
 class Animator():

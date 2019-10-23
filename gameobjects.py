@@ -159,6 +159,16 @@ class Bullet(SpriteGameObject):
         self.speed.y = -1000
 
 
+class E_Bullet(Bullet):
+    SPRITE_NAME = 'bullet'
+    OBJECT_TYPE = 'enemy_bullet'
+    DAMAGE = 25
+
+    def __init__(self, *args, **kw):
+        super(E_Bullet, self).__init__(*args, **kw)
+        self.speed.y = 1000
+
+
 class Enemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
@@ -166,6 +176,11 @@ class Enemy(HealthGameObject):
 
     def __init__(self, *args, **kw):
         super(Enemy, self).__init__(50, *args, **kw)
+
+    def shoot(self):
+        bullet = ResourcesLoader.create_gameobject(E_Bullet)
+        bullet.pos = pygame.math.Vector2(self.pos)
+        return bullet
 
 
 class Explosion(SpriteGameObject):

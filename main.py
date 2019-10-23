@@ -21,7 +21,7 @@ def level_test(game_manager):
     for y in range (0, 4):
         for x in range(0, 10):
             enemy = res.create_gameobject(Enemy)
-            enemy.pos = (150 + x*75,50 + y * 75)
+            enemy.pos = pygame.math.Vector2(150 + x*75, 50 + y * 75)
             world.append(enemy, 'enemy')
 
     player = res.create_gameobject(Player)
@@ -43,7 +43,7 @@ while True:
         break
 
     dt = game.update_world(display)
-    logic.update()
+    logic.update(dt)
 
     fps = int(1 / dt)
 
