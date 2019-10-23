@@ -18,6 +18,7 @@ def level_test(game_manager):
     world = game_manager.world
     res = ResourcesLoader
     enemy = res.create_gameobject(Enemy)
+    enemy.pos = (512, 200)
     world.append(enemy, 'enemy')
 
     player = res.create_gameobject(Player)

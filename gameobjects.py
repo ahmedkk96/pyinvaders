@@ -24,7 +24,6 @@ class ResourcesLoader():
         return ResourcesLoader.sprite_from_path(
                 data['path'], data['tx'], data['ty'])
 
-
     def sprite_from_path(filename, tx, ty):
         img = pygame.image.load(filename).convert_alpha()
         return Sprite(img, tx, ty)
@@ -82,7 +81,7 @@ class Sprite(pygame.sprite.Sprite):
 
 
 class GameObject:
-    OBJECT_TYPE=''
+    OBJECT_TYPE = ''
 
     def __init__(self,
                  pos=Vector2(0, 0),
@@ -122,17 +121,27 @@ class SpriteGameObject(GameObject):
         self.sprite.draw(target_surf, self.pos, self.frame)
 
 
-class Player(SpriteGameObject):
+class HealthGameObject(SpriteGameObject):
+    def __init__(self, health, *args, **kw):
+        super(HealthGameObject, self).__init__(*args, **kw)
+        self.health = health
+
+    def take_damage(self, damage):
+        '''
+        Returns True when health is depleted
+        '''
+        self.health -= damage
+        if self.health <= 0:
+            return True
+        return False
+
+
+class Player(HealthGameObject):
     SPRITE_NAME = 'player'
     OBJECT_TYPE = 'player'
 
-    def __init__(self, sprite):
-        super(Player, self).__init__(sprite)
-        self.health = 100
-
-    def update(self, delta_time):
-        SpriteGameObject.update(self, delta_time)
-        self.pos = Vector2(pygame.mouse.get_pos())
+    def __init__(self, *args, **kw):
+        super(Player, self).__init__(100, *args, **kw)
 
     def shoot(self):
         b = ResourcesLoader.create_gameobject(Bullet)
@@ -143,21 +152,21 @@ class Player(SpriteGameObject):
 class Bullet(SpriteGameObject):
     SPRITE_NAME = 'bullet'
     OBJECT_TYPE = 'bullet'
+    DAMAGE = 25
 
     def __init__(self, sprite):
         super(Bullet, self).__init__(sprite)
         self.speed.y = -1000
 
 
-class Enemy(SpriteGameObject):
+class Enemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
 
-    def __init__(self, sprite):
-        super(Enemy, self).__init__(sprite, (512, 32))
-        self.health = 100
+    def __init__(self, *args, **kw):
+        super(Enemy, self).__init__(50, *args, **kw)
 
 
 class Explosion(SpriteGameObject):
     SPRITE_NAME = 'explosion'
-    OBJECT_NAME = 'explosion'
+    OBJECT_TYPE = 'explosion'

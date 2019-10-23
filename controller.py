@@ -10,9 +10,6 @@ from pygame.locals import (
 import datetime
 
 
-
-
-
 class Input():
     def __init__(self):
         self._events = {}
@@ -80,7 +77,7 @@ class World():
 class Logic():
     def __init__(self, game_manager):
         self._can_shoot = True
-        self._game_manager = game_manager
+        self._game = game_manager
         world = game_manager.world
         mouse = game_manager.mouse
         self._player = world.get_by_type('player')[0]
@@ -94,29 +91,35 @@ class Logic():
     def shoot(self, down):
         if down:
             if self._can_shoot:
-                self._world.append(self._player.shoot(), 'bullet')
+                self._game.add_go(self._player.shoot())
                 self._can_shoot = False
         else:
             self._can_shoot = True
 
     def update(self):
+        self._update_player_pos()
+        self._check_player_bullets()
+
+    def _create_explosion(self, pos):
+        exp = self._game.create_add_go(gameobjects.Explosion)
+        exp.pos = pos
+        self._game.animator.add_object_onetime(exp, self._world.remove)
+
+    def _check_player_bullets(self):
         for bullet in self._bullets:
             if bullet.pos.y < 0:
                 self._world.remove(bullet)
             else:
                 for enemy in self._enemies:
                     if bullet.collides(enemy):
-                        enemy.health -= 10
                         self._world.remove(bullet)
-                        if enemy.health <= 0:
+                        if enemy.take_damage(bullet.DAMAGE):
                             self._world.remove(enemy)
                             self._create_explosion(enemy.pos)
 
-    def _create_explosion(self, pos):
-        exp = self._res.create_gameobject(gameobjects.Explosion)
-        exp.pos = pos
-        self._game_manager.world.append(exp, 'explosion')
-        self._game_manager.animator.add_object_onetime(exp, self._world.remove)
+    def _update_player_pos(self):
+        mouse_pos = pygame.mouse.get_pos()
+        self._player.pos = pygame.math.Vector2(mouse_pos)
 
 
 class Animator():
@@ -204,3 +207,11 @@ class Game():
 
         self._lastdt = dt
         return delta_time
+
+    def create_add_go(self, type):
+        go = gameobjects.ResourcesLoader.create_gameobject(type)
+        self.world.append(go, go.OBJECT_TYPE)
+        return go
+
+    def add_go(self, go):
+        self.world.append(go, go.OBJECT_TYPE)
