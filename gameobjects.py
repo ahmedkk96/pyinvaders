@@ -162,6 +162,7 @@ class Bullet(SpriteGameObject):
 class Enemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
+    SCORE = 10
 
     def __init__(self, *args, **kw):
         super(Enemy, self).__init__(50, *args, **kw)

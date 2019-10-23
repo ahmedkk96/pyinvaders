@@ -85,6 +85,7 @@ class Logic():
         self._enemies = world.get_by_type('enemy')
         self._world = world
         self._res = gameobjects.ResourcesLoader
+        self.score = 0
 
         mouse.register(1, self.shoot)
 
@@ -116,6 +117,7 @@ class Logic():
                         if enemy.take_damage(bullet.DAMAGE):
                             self._world.remove(enemy)
                             self._create_explosion(enemy.pos)
+                            self.score += enemy.SCORE
 
     def _update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -146,10 +148,10 @@ class Animator():
         '''
         asprite = obj.sprite
         fps = asprite.fps
-        asprite.internal_frame += delta_time * fps
-        if asprite.internal_frame >= 1:
-            delta_frames = int(asprite.internal_frame)
-            asprite.internal_frame -= delta_frames
+        obj.internal_frame += delta_time * fps
+        if obj.internal_frame >= 1:
+            delta_frames = int(obj.internal_frame)
+            obj.internal_frame -= delta_frames
             obj.frame += delta_frames
             if obj.frame >= asprite.frames_count:
                 obj.frame %= asprite.frames_count
@@ -158,7 +160,7 @@ class Animator():
 
     def add_object_loop(self, object):
         if object not in self._objects_loop:
-            object.sprite.internal_frame = 0
+            object.internal_frame = 0
             self._objects_loop.append(object)
 
     def remove_object(self, object):
@@ -167,7 +169,7 @@ class Animator():
 
     def add_object_onetime(self, object, callback):
         if object not in self._objects_onetime:
-            object.sprite.internal_frame = 0
+            object.internal_frame = 0
             self._objects_onetime[object] = callback
 
 

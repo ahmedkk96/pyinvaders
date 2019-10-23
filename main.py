@@ -17,9 +17,12 @@ pygame.mouse.set_visible(False)
 def level_test(game_manager):
     world = game_manager.world
     res = ResourcesLoader
-    enemy = res.create_gameobject(Enemy)
-    enemy.pos = (512, 200)
-    world.append(enemy, 'enemy')
+
+    for y in range (0, 4):
+        for x in range(0, 10):
+            enemy = res.create_gameobject(Enemy)
+            enemy.pos = (150 + x*75,50 + y * 75)
+            world.append(enemy, 'enemy')
 
     player = res.create_gameobject(Player)
     player.sprite.fps = 15
@@ -53,6 +56,7 @@ while True:
     debugger.add(str(fps))
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
+    debugger.add('Score = {}'.format(logic.score))
     dic = game.world.get_main_dic().items()
     for type_name, array in dic:
         debugger.add('{}: {}'.format(type_name, len(array)))
