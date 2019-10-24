@@ -14,6 +14,8 @@ class ResourcesLoader():
                     'bullet_2':       {'path': 'sprites/bullet_2.png',
                                      'tx': 1, 'ty': 1},
                     'e_bullet_1':       {'path': 'sprites/e_bullet_1.png',
+                                     'tx': 1, 'ty': 1},
+                    'powerup':       {'path': 'sprites/powerup.png',
                                      'tx': 1, 'ty': 1}
                     }
 
@@ -199,6 +201,12 @@ class Player(HealthGameObject):
             self._shooting_mode -= 1
             self._set_shoot_mode()
 
+    def on_powerup(self, powerup):
+        # Should check the type of powerup
+        # and initiate the right upgrade
+        # but let's just go easy
+        self.upgrade_shoot()
+
 
 class bullet_1(SpriteGameObject):
     SPRITE_NAME = 'bullet_1'
@@ -247,3 +255,17 @@ class Enemy(HealthGameObject):
 class Explosion(SpriteGameObject):
     SPRITE_NAME = 'explosion'
     OBJECT_TYPE = 'explosion'
+
+
+class DropItem(SpriteGameObject):
+    SPEED = 0
+
+    def __init__(self, *args, **kwargs):
+        super(DropItem, self).__init__(*args, **kwargs)
+        self.speed = Vector2(0, self.SPEED)
+
+
+class Powerup(DropItem):
+    SPRITE_NAME = 'powerup'
+    OBJECT_TYPE = 'powerup'
+    SPEED = 300
