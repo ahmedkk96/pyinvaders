@@ -122,7 +122,7 @@ class Logic():
 
     def _create_explosion(self, pos):
         exp = self._game.create_add_go(gameobjects.Explosion)
-        exp.pos = pos
+        exp.set_pos(pos)
         self._game.animator.add_object_onetime(exp, self._world.remove)
 
     def _check_player_bullets(self):
@@ -135,9 +135,9 @@ class Logic():
                         self._world.remove(bullet)
                         if enemy.take_damage(bullet.DAMAGE):
                             self._world.remove(enemy)
-                            self._create_explosion(enemy.pos)
+                            self._create_explosion(enemy.get_pos())
                             self.score += enemy.SCORE
-                            self._drop_powerup(enemy.pos)
+                            self._drop_powerup(enemy.get_pos())
 
     def _check_enemy_bullets(self):
         for bullet in self._e_bullets:
@@ -151,7 +151,7 @@ class Logic():
 
     def _update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
-        self._player.pos = pygame.math.Vector2(mouse_pos)
+        self._player.set_pos(mouse_pos)
 
     def _enemy_shoot(self, delta_time):
         self._e_shoot_timeout -= delta_time
@@ -165,7 +165,7 @@ class Logic():
 
     def _drop_powerup(self, pos):
         pu = self._res.create_gameobject(gameobjects.Powerup)
-        pu.pos = pos
+        pu.set_pos(pos)
         self._game.add_go(pu)
 
     def _check_powerups(self):

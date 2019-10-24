@@ -89,19 +89,17 @@ class Sprite(pygame.sprite.Sprite):
 class GameObject:
     OBJECT_TYPE = ''
 
-    def __init__(self,
-                 pos=Vector2(0, 0),
-                 size=Vector2(32, 32)):
-        self.pos = pos
-        self.size = size
+    def __init__(self):
+        self._pos = Vector2(0, 0)
+        self._size = Vector2(1, 1)
         self.speed = Vector2(0, 0)
 
     def update(self, delta_time):
         # Movement
-        self.pos += self.speed * delta_time
+        self._pos += self.speed * delta_time
 
     def get_rect(self):
-        return Rect_From_Center(self.pos, self.size)
+        return Rect_From_Center(self._pos, self._size)
 
     def collides(self, other):
         return self.get_rect().colliderect(other.get_rect())
@@ -109,6 +107,12 @@ class GameObject:
     def inside_screen(self, screen_rect):
         self_rect = self.get_rect()
         return self_rect.colliderect(screen_rect)
+
+    def get_pos(self):
+        return Vector2(self._pos)  # a copy
+
+    def set_pos(self, pos):
+        self._pos = Vector2(pos)  # a copy
 
 
 class SpriteGameObject(GameObject):
@@ -119,16 +123,14 @@ class SpriteGameObject(GameObject):
     SPRITE_NAME = ''
 
     def __init__(self,
-                 sprite,
-                 pos=Vector2(0, 0),
-                 size=Vector2(32, 32)):
-        GameObject.__init__(self, pos, size)
+                 sprite):
+        GameObject.__init__(self)
         self.sprite = sprite
-        self.size = sprite.image.get_size()
+        self._size = sprite.image.get_size()
         self.frame = 0
 
     def draw(self, target_surf):
-        self.sprite.draw(target_surf, self.pos, self.frame)
+        self.sprite.draw(target_surf, self._pos, self.frame)
 
 
 class HealthGameObject(SpriteGameObject):
@@ -181,7 +183,7 @@ class Player(HealthGameObject):
 
     def _create_bullet(self, offset_x, offset_y, type):
         b = ResourcesLoader.create_gameobject(type)
-        b.pos = self.pos + Vector2(offset_x, offset_y)
+        b.set_pos(self._pos + Vector2(offset_x, offset_y))
         return b
 
     def _set_shoot_mode(self):
@@ -242,13 +244,14 @@ class Enemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
     SCORE = 10
+    HEALTH = 50
 
     def __init__(self, *args, **kw):
-        super(Enemy, self).__init__(50, *args, **kw)
+        super(Enemy, self).__init__(self.HEALTH, *args, **kw)
 
     def shoot(self):
         bullet = ResourcesLoader.create_gameobject(e_bullet_1)
-        bullet.pos = pygame.math.Vector2(self.pos)
+        bullet.set_pos(self._pos)
         return bullet
 
 
