@@ -9,7 +9,11 @@ class ResourcesLoader():
                                      'tx': 2, 'ty': 1},
                     'enemy':        {'path': 'sprites/enemyRed2.png',
                                      'tx': 1, 'ty': 1},
-                    'bullet':       {'path': 'sprites/laserRed01.png',
+                    'bullet_1':       {'path': 'sprites/laserRed01.png',
+                                     'tx': 1, 'ty': 1},
+                    'bullet_2':       {'path': 'sprites/bullet_2.png',
+                                     'tx': 1, 'ty': 1},
+                    'e_bullet_1':       {'path': 'sprites/e_bullet_1.png',
                                      'tx': 1, 'ty': 1}
                     }
 
@@ -146,31 +150,84 @@ class Player(HealthGameObject):
 
     def __init__(self, *args, **kw):
         super(Player, self).__init__(100, *args, **kw)
+        self.shoot = self._shoot_0
+        self._shooting_modes = [self._shoot_0,
+                                self._shoot_1,
+                                self._shoot_2,
+                                self._shoot_3]
+        self._shooting_mode = 0
 
-    def shoot(self):
-        b = ResourcesLoader.create_gameobject(Bullet)
-        b.pos = self.pos
+    def _shoot_0(self):
+        b = self._create_bullet(0, 0, bullet_1)
+        return [b]
+
+    def _shoot_1(self):
+        b1 = self._create_bullet(25, 0, bullet_1)
+        b2 = self._create_bullet(-25, 0, bullet_1)
+        return [b1, b2]
+
+    def _shoot_2(self):
+        b3 = self._create_bullet(0, -25, bullet_1)
+        bullets = self._shoot_1()
+        bullets.append(b3)
+        return bullets
+
+    def _shoot_3(self):
+        b1 = self._create_bullet(25, 0, bullet_2)
+        b2 = self._create_bullet(-25, 0, bullet_2)
+        return [b1, b2]
+
+    def _create_bullet(self, offset_x, offset_y, type):
+        b = ResourcesLoader.create_gameobject(type)
+        b.pos = self.pos + Vector2(offset_x, offset_y)
         return b
 
+    def _set_shoot_mode(self):
+        self.shoot = self._shooting_modes[self._shooting_mode]
 
-class Bullet(SpriteGameObject):
-    SPRITE_NAME = 'bullet'
+    def upgrade_shoot(self):
+        if self._shooting_mode < len(self._shooting_modes) - 1:
+            self._shooting_mode += 1
+            self._set_shoot_mode()
+
+    def remove_shoot_upgrades(self):
+        self._shooting_mode = 0
+        self._set_shoot_mode()
+
+    def downgrade_shoot(self):
+        if self._shooting_mode > 0:
+            self._shooting_mode -= 1
+            self._set_shoot_mode()
+
+
+class bullet_1(SpriteGameObject):
+    SPRITE_NAME = 'bullet_1'
     OBJECT_TYPE = 'bullet'
     DAMAGE = 25
 
     def __init__(self, sprite):
-        super(Bullet, self).__init__(sprite)
+        super(bullet_1, self).__init__(sprite)
         self.speed.y = -1000
 
 
-class E_Bullet(Bullet):
-    SPRITE_NAME = 'bullet'
+class bullet_2(bullet_1):
+    SPRITE_NAME = 'bullet_2'
+    OBJECT_TYPE = 'bullet'
+    DAMAGE = 50
+
+    def __init__(self, sprite):
+        super(bullet_1, self).__init__(sprite)
+        self.speed.y = -1000
+
+
+class e_bullet_1(bullet_1):
+    SPRITE_NAME = 'e_bullet_1'
     OBJECT_TYPE = 'enemy_bullet'
     DAMAGE = 25
 
     def __init__(self, *args, **kw):
-        super(E_Bullet, self).__init__(*args, **kw)
-        self.speed.y = 1000
+        super(e_bullet_1, self).__init__(*args, **kw)
+        self.speed.y = 300
 
 
 class Enemy(HealthGameObject):
@@ -182,7 +239,7 @@ class Enemy(HealthGameObject):
         super(Enemy, self).__init__(50, *args, **kw)
 
     def shoot(self):
-        bullet = ResourcesLoader.create_gameobject(E_Bullet)
+        bullet = ResourcesLoader.create_gameobject(e_bullet_1)
         bullet.pos = pygame.math.Vector2(self.pos)
         return bullet
 

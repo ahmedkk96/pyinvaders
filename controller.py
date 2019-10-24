@@ -92,14 +92,26 @@ class Logic():
         self._e_shoot_timeout = 1
 
         mouse.register(1, self.shoot)
+        self._game.keyboard.register(97, self.upgrade_shoot)
+        self._game.keyboard.register(122, self.downgrade_shoot)
 
     def shoot(self, down):
         if down:
             if self._can_shoot:
-                self._game.add_go(self._player.shoot())
+                bullets = self._player.shoot()
+                for b in bullets:
+                    self._game.add_go(b)
                 self._can_shoot = False
         else:
             self._can_shoot = True
+
+    def upgrade_shoot(self, down):
+        if down:
+            self._player.upgrade_shoot()
+
+    def downgrade_shoot(self, down):
+        if down:
+            self._player.downgrade_shoot()
 
     def update(self, delta_time):
         self._update_player_pos()
