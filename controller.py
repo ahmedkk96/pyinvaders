@@ -114,7 +114,7 @@ class Logic():
 
     def _check_player_bullets(self):
         for bullet in self._bullets:
-            if bullet.pos.y < 0:
+            if not bullet.inside_screen(self._game.screen_rect):
                 self._world.remove(bullet)
             else:
                 for enemy in self._enemies:
@@ -127,7 +127,7 @@ class Logic():
 
     def _check_enemy_bullets(self):
         for bullet in self._e_bullets:
-            if bullet.pos.y > 1280:  # Fix this
+            if not bullet.inside_screen(self._game.screen_rect):
                 self._world.remove(bullet)
             else:
                 if bullet.collides(self._player):
@@ -200,13 +200,16 @@ class Animator():
 
 
 class Game():
-    def __init__(self):
+    def __init__(self, screen_width, screen_height):
         self.keyboard = Input()
         self.mouse = Input()
         self.world = World()
         self.animator = Animator()
         gameobjects.ResourcesLoader.__init__()
         self._lastdt = datetime.datetime.now()
+        self.screen_rect = pygame.rect.Rect(0, 0,
+                                            screen_width,
+                                            screen_height)
 
     def pygame_events(self):
         for event in pygame.event.get():

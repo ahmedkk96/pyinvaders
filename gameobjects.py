@@ -100,6 +100,10 @@ class GameObject:
     def collides(self, other):
         return self.get_rect().colliderect(other.get_rect())
 
+    def inside_screen(self, screen_rect):
+        self_rect = self.get_rect()
+        return self_rect.colliderect(screen_rect)
+
 
 class SpriteGameObject(GameObject):
     '''

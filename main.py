@@ -34,7 +34,7 @@ clock = pygame.time.Clock()
 
 debugger = TextDebugger.Renderer()
 
-game = controller.Game()
+game = controller.Game(RES_X, RES_Y)
 level_test(game)
 logic = controller.Logic(game)
 
