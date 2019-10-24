@@ -16,6 +16,8 @@ class ResourcesLoader():
                     'e_bullet_1':       {'path': 'sprites/e_bullet_1.png',
                                      'tx': 1, 'ty': 1},
                     'powerup':       {'path': 'sprites/powerup.png',
+                                     'tx': 1, 'ty': 1},
+                    'shield_1':       {'path': 'sprites/shield_1.png',
                                      'tx': 1, 'ty': 1}
                     }
 
@@ -160,6 +162,15 @@ class Player(HealthGameObject):
                                 self._shoot_2,
                                 self._shoot_3]
         self._shooting_mode = 0
+        self._shield = None
+
+    def take_damage(self, damage):
+        if self._shield is not None:
+            down = self._shield.take_damage(damage)
+            if down:
+                self._shield = None
+        else:
+            super(Player, self).take_damage(damage)
 
     def _shoot_0(self):
         b = self._create_bullet(0, 0, bullet_1)
@@ -208,6 +219,12 @@ class Player(HealthGameObject):
         # and initiate the right upgrade
         # but let's just go easy
         self.upgrade_shoot()
+
+    def create_shield(self, shield):
+        sh = ResourcesLoader.create_gameobject(shield)
+        sh.set_player(self)
+        self._shield = sh
+        return sh
 
 
 class bullet_1(SpriteGameObject):
@@ -272,3 +289,32 @@ class Powerup(DropItem):
     SPRITE_NAME = 'powerup'
     OBJECT_TYPE = 'powerup'
     SPEED = 300
+
+
+class Shield(SpriteGameObject):
+    OBJECT_TYPE = 'shield'
+    HEALTH = 0
+    OFF_Y = 0
+
+    def __init__(self, *args, **kwargs):
+        super(Shield, self).__init__(*args, **kwargs)
+        self._health = self.HEALTH
+
+    def set_player(self, player):
+        self._player = player
+
+    def take_damage(self, damage):
+        self._health -= damage
+        if self._health < 0:
+            return True
+        return False
+
+    def update(self, delta_time):
+        self._pos = self._player.get_pos()
+        self._pos.y += self.OFF_Y
+
+
+class shield_1(Shield):
+    SPRITE_NAME = 'shield_1'
+    HEALTH = 100
+    OFF_Y = -30
