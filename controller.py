@@ -75,6 +75,13 @@ class World():
         return self._objects
 
 
+class Randomizer():
+    def Drop(chance=0.2):
+        r = random.randint(0, 100)
+        max_val = 100 * chance
+        return r < max_val
+
+
 class Logic():
     def __init__(self, game_manager):
         self._can_shoot = True
@@ -164,9 +171,10 @@ class Logic():
             self._e_shoot_timeout = 1
 
     def _drop_powerup(self, pos):
-        pu = self._res.create_gameobject(gameobjects.Powerup)
-        pu.set_pos(pos)
-        self._game.add_go(pu)
+        if Randomizer.Drop(0.1):
+            pu = self._res.create_gameobject(gameobjects.Powerup)
+            pu.set_pos(pos)
+            self._game.add_go(pu)
 
     def _check_powerups(self):
         powerups = self._world.get_by_type('powerup')
