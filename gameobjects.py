@@ -36,10 +36,6 @@ class ResourcesLoader():
         img = pygame.image.load(filename).convert_alpha()
         return Sprite(img, tx, ty)
 
-    def create_gameobject(type):
-        sprite = ResourcesLoader.sprites[type.SPRITE_NAME]
-        return type(sprite)
-
 
 def Rect_From_Center(pos, size):
         tx1 = pos[0] - size[0]/2
@@ -124,12 +120,16 @@ class SpriteGameObject(GameObject):
     '''
     SPRITE_NAME = ''
 
-    def __init__(self,
-                 sprite):
+    def __init__(self):
         GameObject.__init__(self)
+        sprite = self._load_sprite()
         self.sprite = sprite
         self._size = sprite.image.get_size()
         self.frame = 0
+
+    def _load_sprite(self):
+        sprite = ResourcesLoader.sprites[self.SPRITE_NAME]
+        return sprite
 
     def draw(self, target_surf):
         self.sprite.draw(target_surf, self._pos, self.frame)
@@ -196,7 +196,7 @@ class Player(HealthGameObject):
         return [b1, b2]
 
     def _create_bullet(self, offset_x, offset_y, type):
-        b = ResourcesLoader.create_gameobject(type)
+        b = type()
         b.set_pos(self._pos + Vector2(offset_x, offset_y))
         return b
 
@@ -224,7 +224,7 @@ class Player(HealthGameObject):
         self.upgrade_shoot()
 
     def create_shield(self, shield):
-        sh = ResourcesLoader.create_gameobject(shield)
+        sh = shield()
         sh.set_player(self)
         self._shield = sh
         return sh
@@ -235,8 +235,8 @@ class bullet_1(SpriteGameObject):
     OBJECT_TYPE = 'bullet'
     DAMAGE = 25
 
-    def __init__(self, sprite):
-        super(bullet_1, self).__init__(sprite)
+    def __init__(self):
+        super(bullet_1, self).__init__()
         self.speed.y = -1000
 
 
@@ -267,7 +267,7 @@ class Enemy(HealthGameObject):
     HEALTH = 50
 
     def shoot(self):
-        bullet = ResourcesLoader.create_gameobject(e_bullet_1)
+        bullet = e_bullet_1()
         bullet.set_pos(self._pos)
         return bullet
 

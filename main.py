@@ -16,15 +16,14 @@ pygame.mouse.set_visible(False)
 
 def level_test(game_manager):
     world = game_manager.world
-    res = ResourcesLoader
 
     for y in range(0, 4):
         for x in range(0, 10):
-            enemy = res.create_gameobject(Enemy)
+            enemy = Enemy()
             enemy.set_pos((150 + x*75, 50 + y * 75))
             world.append(enemy, 'enemy')
 
-    player = res.create_gameobject(Player)
+    player = Player()
     player.sprite.fps = 15
     game_manager.add_go(player.create_shield(shield_1))
     world.append(player, 'player')

@@ -173,9 +173,8 @@ class Logic():
 
     def _drop_powerup(self, pos):
         if Randomizer.Drop(0.1):
-            pu = self._res.create_gameobject(gameobjects.Powerup)
+            pu = self._game.create_add_go(gameobjects.Powerup)
             pu.set_pos(pos)
-            self._game.add_go(pu)
 
     def _check_powerups(self):
         powerups = self._world.get_by_type('powerup')
@@ -281,8 +280,8 @@ class Game():
         return delta_time
 
     def create_add_go(self, type):
-        go = gameobjects.ResourcesLoader.create_gameobject(type)
-        self.world.append(go, go.OBJECT_TYPE)
+        go = type()
+        self.add_go(go)
         return go
 
     def add_go(self, go):
