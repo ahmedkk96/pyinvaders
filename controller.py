@@ -43,7 +43,7 @@ class World():
         self._append_list(object, self._all_objects)
 
         # Wire object to this world
-        object.world_add_object = self.append
+        object.world_add_object = self.append_child
         object.world_remove_object = self.remove
 
     def _append_dic(self, key, value, dic):
@@ -61,6 +61,9 @@ class World():
         return self._all_objects
 
     def remove(self, object):
+        if object.parent is not None:
+            object.on_remove_child(object)
+
         g = self._objects[object.OBJECT_TYPE]
         g.remove(object)
         self._all_objects.remove(object)
@@ -76,6 +79,10 @@ class World():
 
     def get_main_dic(self):
         return self._objects
+
+    def append_child(self, parent, child):
+        child.parent = parent
+        self.append(child)
 
 
 class Randomizer():

@@ -93,6 +93,7 @@ class GameObject:
         self.speed = Vector2(0, 0)
         self.world_add_object = None
         self.world_remove_object = None
+        self.parent = None
 
     def update(self, delta_time):
         # Movement
@@ -113,6 +114,12 @@ class GameObject:
 
     def set_pos(self, pos):
         self._pos = Vector2(pos)  # a copy
+
+    def world_add_child(self, child):
+        self.world_add_object(self, child)
+
+    def on_remove_child(self, child):
+        pass
 
 
 class SpriteGameObject(GameObject):
@@ -195,7 +202,7 @@ class Player(HealthGameObject):
     def _create_bullet(self, offset_x, offset_y, type):
         b = type()
         b.set_pos(self._pos + Vector2(offset_x, offset_y))
-        self.world_add_object(b)
+        self.world_add_child(b)
 
     def _set_shoot_mode(self):
         self.shoot = self._shooting_modes[self._shooting_mode]
@@ -224,7 +231,7 @@ class Player(HealthGameObject):
         sh = shield()
         sh.set_player(self)
         self._shield = sh
-        self.world_add_object(sh)
+        self.world_add_child(sh)
 
 
 class bullet_1(SpriteGameObject):
@@ -266,7 +273,7 @@ class Enemy(HealthGameObject):
     def shoot(self):
         bullet = e_bullet_1()
         bullet.set_pos(self._pos)
-        self.world_add_object(bullet)
+        self.world_add_child(bullet)
 
 
 class Explosion(SpriteGameObject):
