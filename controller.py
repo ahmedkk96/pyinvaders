@@ -37,10 +37,14 @@ class World():
         # Contains all objects
         self._all_objects = []
 
-    def append(self, object, type_name):
+    def append(self, object):
+        type_name = object.OBJECT_TYPE
         self._append_dic(type_name, object, self._objects)
         self._append_list(object, self._all_objects)
-        self._append_dic(object, self._objects[type_name], self._obj_parents)
+
+        # Wire object to this world
+        object.world_add_object = self.append
+        object.world_remove_object = self.remove
 
     def _append_dic(self, key, value, dic):
         if key in dic:
@@ -57,13 +61,12 @@ class World():
         return self._all_objects
 
     def remove(self, object):
-        groups = self._obj_parents[object]
-        for g in groups:
-            g.remove(object)
+        g = self._objects[object.OBJECT_TYPE]
+        g.remove(object)
         self._all_objects.remove(object)
-        del self._obj_parents[object]
 
-    def get_by_type(self, type_name):
+    def get_by_type(self, type):
+        type_name = type.OBJECT_TYPE
         if type_name not in self._objects:
             # Create the requested type_name and
             # return it as an empty array
@@ -88,10 +91,10 @@ class Logic():
         self._game = game_manager
         world = game_manager.world
         mouse = game_manager.mouse
-        self._player = world.get_by_type('player')[0]
-        self._bullets = world.get_by_type('bullet')
-        self._enemies = world.get_by_type('enemy')
-        self._e_bullets = world.get_by_type('enemy_bullet')
+        self._player = world.get_by_type(gameobjects.Player)[0]
+        self._bullets = world.get_by_type(gameobjects.bullet_1)
+        self._enemies = world.get_by_type(gameobjects.Enemy)
+        self._e_bullets = world.get_by_type(gameobjects.e_bullet_1)
         self._world = world
         self._res = gameobjects.ResourcesLoader
         self.score = 0
@@ -105,9 +108,7 @@ class Logic():
     def shoot(self, down):
         if down:
             if self._can_shoot:
-                bullets = self._player.shoot()
-                for b in bullets:
-                    self._game.add_go(b)
+                self._player.shoot()
                 self._can_shoot = False
         else:
             self._can_shoot = True
@@ -168,7 +169,7 @@ class Logic():
             for i in range(0, num_of_enemies):
                 enemies_count = len(self._enemies) - 1
                 enemy = self._enemies[random.randint(0, enemies_count)]
-                self._game.add_go(enemy.shoot())
+                enemy.shoot()
             self._e_shoot_timeout = 1
 
     def _drop_powerup(self, pos):
@@ -177,14 +178,14 @@ class Logic():
             pu.set_pos(pos)
 
     def _check_powerups(self):
-        powerups = self._world.get_by_type('powerup')
+        powerups = self._world.get_by_type(gameobjects.Powerup)
         for p in powerups:
             if p.collides(self._player):
                 self._player.on_powerup(p)
                 self._world.remove(p)
 
     def _check_shield(self):
-        shield = self._world.get_by_type('shield')
+        shield = self._world.get_by_type(gameobjects.Shield)
         if len(shield) == 1:  # Cannot be larger!
             if shield[0].health == 0:
                 self._world.remove(shield[0])
@@ -285,4 +286,4 @@ class Game():
         return go
 
     def add_go(self, go):
-        self.world.append(go, go.OBJECT_TYPE)
+        self.world.append(go)

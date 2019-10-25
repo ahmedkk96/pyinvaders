@@ -21,13 +21,13 @@ def level_test(game_manager):
         for x in range(0, 10):
             enemy = Enemy()
             enemy.set_pos((150 + x*75, 50 + y * 75))
-            world.append(enemy, 'enemy')
+            world.append(enemy)
 
     player = Player()
     player.sprite.fps = 15
-    game_manager.add_go(player.create_shield(shield_1))
-    world.append(player, 'player')
+    world.append(player)
     game_manager.animator.add_object_loop(player)
+    player.create_shield(shield_1)
 
 
 clock = pygame.time.Clock()

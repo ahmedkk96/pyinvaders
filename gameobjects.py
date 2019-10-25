@@ -91,6 +91,8 @@ class GameObject:
         self._pos = Vector2(0, 0)
         self._size = Vector2(1, 1)
         self.speed = Vector2(0, 0)
+        self.world_add_object = None
+        self.world_remove_object = None
 
     def update(self, delta_time):
         # Movement
@@ -176,29 +178,24 @@ class Player(HealthGameObject):
             return super(Player, self).take_damage(damage)
 
     def _shoot_0(self):
-        b = self._create_bullet(0, 0, bullet_1)
-        return [b]
+        self._create_bullet(0, 0, bullet_1)
 
     def _shoot_1(self):
-        b1 = self._create_bullet(25, 0, bullet_1)
-        b2 = self._create_bullet(-25, 0, bullet_1)
-        return [b1, b2]
+        self._create_bullet(25, 0, bullet_1)
+        self._create_bullet(-25, 0, bullet_1)
 
     def _shoot_2(self):
-        b3 = self._create_bullet(0, -25, bullet_1)
+        self._create_bullet(0, -25, bullet_1)
         bullets = self._shoot_1()
-        bullets.append(b3)
-        return bullets
 
     def _shoot_3(self):
-        b1 = self._create_bullet(25, 0, bullet_2)
-        b2 = self._create_bullet(-25, 0, bullet_2)
-        return [b1, b2]
+        self._create_bullet(25, 0, bullet_2)
+        self._create_bullet(-25, 0, bullet_2)
 
     def _create_bullet(self, offset_x, offset_y, type):
         b = type()
         b.set_pos(self._pos + Vector2(offset_x, offset_y))
-        return b
+        self.world_add_object(b)
 
     def _set_shoot_mode(self):
         self.shoot = self._shooting_modes[self._shooting_mode]
@@ -227,7 +224,7 @@ class Player(HealthGameObject):
         sh = shield()
         sh.set_player(self)
         self._shield = sh
-        return sh
+        self.world_add_object(sh)
 
 
 class bullet_1(SpriteGameObject):
@@ -245,8 +242,8 @@ class bullet_2(bullet_1):
     OBJECT_TYPE = 'bullet'
     DAMAGE = 50
 
-    def __init__(self, sprite):
-        super(bullet_1, self).__init__(sprite)
+    def __init__(self):
+        super(bullet_1, self).__init__()
         self.speed.y = -1000
 
 
@@ -269,7 +266,7 @@ class Enemy(HealthGameObject):
     def shoot(self):
         bullet = e_bullet_1()
         bullet.set_pos(self._pos)
-        return bullet
+        self.world_add_object(bullet)
 
 
 class Explosion(SpriteGameObject):
