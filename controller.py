@@ -127,7 +127,6 @@ class Logic():
         self._enemy_shoot(delta_time)
         self._check_enemy_bullets()
         self._check_powerups()
-        self._check_shield()
 
     def _create_explosion(self, pos):
         exp = self._game.create_add_go(gameobjects.Explosion)
@@ -183,12 +182,6 @@ class Logic():
             if p.collides(self._player):
                 self._player.on_powerup(p)
                 self._world.remove(p)
-
-    def _check_shield(self):
-        shield = self._world.get_by_type(gameobjects.Shield)
-        if len(shield) == 1:  # Cannot be larger!
-            if shield[0].health == 0:
-                self._world.remove(shield[0])
 
 
 class Animator():

@@ -171,8 +171,8 @@ class Player(HealthGameObject):
 
     def take_damage(self, damage):
         if self._shield is not None:
-            down = self._shield.take_damage(damage)
-            if down:
+            if self._shield.take_damage(damage):
+                self.world_remove_object(self._shield)
                 self._shield = None
         else:
             return super(Player, self).take_damage(damage)
