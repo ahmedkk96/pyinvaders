@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import pygame
-from gameobjects import Player, Enemy, ResourcesLoader, shield_1
+from gameobjects import Player, Enemy, ResourcesLoader, shield_1, enemy_group_rect
 import controller
 import TextDebugger
 
@@ -17,17 +17,15 @@ pygame.mouse.set_visible(False)
 def level_test(game_manager):
     world = game_manager.world
 
-    for y in range(0, 4):
-        for x in range(0, 10):
-            enemy = Enemy()
-            enemy.set_pos((150 + x*75, 50 + y * 75))
-            world.append(enemy)
-
     player = Player()
     player.sprite.fps = 15
     world.append(player)
     game_manager.animator.add_object_loop(player)
     player.create_shield(shield_1)
+
+    enemy_group = enemy_group_rect()
+    world.append(enemy_group)
+    enemy_group.create_enemies(10, 4, (300, 200), Enemy)
 
 
 clock = pygame.time.Clock()

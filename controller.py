@@ -62,7 +62,7 @@ class World():
 
     def remove(self, object):
         if object.parent is not None:
-            object.on_remove_child(object)
+            object.parent.on_remove_child(object)
 
         g = self._objects[object.OBJECT_TYPE]
         g.remove(object)

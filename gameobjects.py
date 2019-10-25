@@ -99,6 +99,9 @@ class GameObject:
         # Movement
         self._pos += self.speed * delta_time
 
+    def draw(self, display):
+        pass
+
     def get_rect(self):
         return Rect_From_Center(self._pos, self._size)
 
@@ -193,7 +196,7 @@ class Player(HealthGameObject):
 
     def _shoot_2(self):
         self._create_bullet(0, -25, bullet_1)
-        bullets = self._shoot_1()
+        self._shoot_1()
 
     def _shoot_3(self):
         self._create_bullet(25, 0, bullet_2)
@@ -312,3 +315,27 @@ class shield_1(Shield):
     SPRITE_NAME = 'shield_1'
     HEALTH = 100
     OFF_Y = -30
+
+
+class enemy_group_rect(GameObject):
+    OBJECT_TYPE = 'enemy_group'
+
+    def __init__(self):
+        super(enemy_group_rect, self).__init__()
+        self.enemies = []
+
+    def create_enemies(self, width, height, pos, type):
+        padding = 30
+        for y in range(0, height):
+            for x in range(0, width):
+                e = type()
+                rect = e.get_rect()
+                p = Vector2(pos)
+                p.x += rect.width*x + padding
+                p.y += rect.width*y + padding
+                e.set_pos(p)
+                self.enemies.append(e)
+                self.world_add_child(e)
+
+    def on_remove_child(self, child):
+        self.enemies.remove(child)
