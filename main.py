@@ -18,7 +18,7 @@ def level_test(game_manager):
     world = game_manager.world
     res = ResourcesLoader
 
-    for y in range (0, 4):
+    for y in range(0, 4):
         for x in range(0, 10):
             enemy = res.create_gameobject(Enemy)
             enemy.set_pos((150 + x*75, 50 + y * 75))

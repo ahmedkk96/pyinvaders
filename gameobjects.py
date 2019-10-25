@@ -9,15 +9,15 @@ class ResourcesLoader():
                                      'tx': 2, 'ty': 1},
                     'enemy':        {'path': 'sprites/enemyRed2.png',
                                      'tx': 1, 'ty': 1},
-                    'bullet_1':       {'path': 'sprites/laserRed01.png',
+                    'bullet_1':     {'path': 'sprites/laserRed01.png',
                                      'tx': 1, 'ty': 1},
-                    'bullet_2':       {'path': 'sprites/bullet_2.png',
+                    'bullet_2':     {'path': 'sprites/bullet_2.png',
                                      'tx': 1, 'ty': 1},
-                    'e_bullet_1':       {'path': 'sprites/e_bullet_1.png',
+                    'e_bullet_1':   {'path': 'sprites/e_bullet_1.png',
                                      'tx': 1, 'ty': 1},
-                    'powerup':       {'path': 'sprites/powerup.png',
+                    'powerup':      {'path': 'sprites/powerup.png',
                                      'tx': 1, 'ty': 1},
-                    'shield_1':       {'path': 'sprites/shield_1.png',
+                    'shield_1':     {'path': 'sprites/shield_1.png',
                                      'tx': 1, 'ty': 1}
                     }
 
