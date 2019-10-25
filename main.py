@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import pygame
-from gameobjects import Player, Enemy, ResourcesLoader
+from gameobjects import Player, Enemy, ResourcesLoader, shield_1
 import controller
 import TextDebugger
 
@@ -26,6 +26,7 @@ def level_test(game_manager):
 
     player = res.create_gameobject(Player)
     player.sprite.fps = 15
+    game_manager.add_go(player.create_shield(shield_1))
     world.append(player, 'player')
     game_manager.animator.add_object_loop(player)
 
