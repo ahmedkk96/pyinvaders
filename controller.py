@@ -29,22 +29,16 @@ class World():
         # Value: Object
         self._objects = {}
 
-        # Key = gameobject
-        # Value = array of containing groups
-        # helps in deleting objects
-        self._obj_parents = {}
-
         # Contains all objects
         self._all_objects = []
+
+        gameobjects.WorldHelper.init(self.append_child,
+                                     self.remove)
 
     def append(self, object):
         type_name = object.OBJECT_TYPE
         self._append_dic(type_name, object, self._objects)
         self._append_list(object, self._all_objects)
-
-        # Wire object to this world
-        object.world_add_object = self.append_child
-        object.world_remove_object = self.remove
 
     def _append_dic(self, key, value, dic):
         if key in dic:
@@ -81,7 +75,8 @@ class World():
         return self._objects
 
     def append_child(self, parent, child):
-        child.parent = parent
+        if parent is not None:
+            child.parent = parent
         self.append(child)
 
 

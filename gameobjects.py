@@ -37,6 +37,17 @@ class ResourcesLoader():
         return Sprite(img, tx, ty)
 
 
+class WorldHelper:
+    '''
+    Global static class that works as an interface
+    between gameobject instances and world
+    (world global variable)
+    '''
+    def init(append_object, remove_object):
+        WorldHelper.append = append_object
+        WorldHelper.remove = remove_object
+
+
 def Rect_From_Center(pos, size):
         tx1 = pos[0] - size[0]/2
         ty1 = pos[1] - size[1]/2
@@ -91,8 +102,6 @@ class GameObject:
         self._pos = Vector2(0, 0)
         self._size = Vector2(1, 1)
         self.speed = Vector2(0, 0)
-        self.world_add_object = None
-        self.world_remove_object = None
         self.parent = None
 
     def update(self, delta_time):
@@ -118,11 +127,14 @@ class GameObject:
     def set_pos(self, pos):
         self._pos = Vector2(pos)  # a copy
 
-    def world_add_child(self, child):
-        self.world_add_object(self, child)
+    def world_add_object(self, object):
+        WorldHelper.append(None, object)
 
-    def on_remove_child(self, child):
-        pass
+    def world_add_child(self, child):
+        WorldHelper.append(self, child)
+
+    def world_remove_object(self, object):
+        WorldHelper.remove(object)
 
 
 class SpriteGameObject(GameObject):
@@ -205,7 +217,7 @@ class Player(HealthGameObject):
     def _create_bullet(self, offset_x, offset_y, type):
         b = type()
         b.set_pos(self._pos + Vector2(offset_x, offset_y))
-        self.world_add_child(b)
+        self.world_add_object(b)
 
     def _set_shoot_mode(self):
         self.shoot = self._shooting_modes[self._shooting_mode]
@@ -234,7 +246,7 @@ class Player(HealthGameObject):
         sh = shield()
         sh.set_player(self)
         self._shield = sh
-        self.world_add_child(sh)
+        self.world_add_object(sh)
 
 
 class bullet_1(SpriteGameObject):
@@ -276,7 +288,7 @@ class Enemy(HealthGameObject):
     def shoot(self):
         bullet = e_bullet_1()
         bullet.set_pos(self._pos)
-        self.world_add_child(bullet)
+        self.world_add_object(bullet)
 
 
 class Explosion(SpriteGameObject):
