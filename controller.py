@@ -148,6 +148,7 @@ class Logic():
                             self._create_explosion(enemy.get_pos())
                             self.score += enemy.SCORE
                             self._drop_powerup(enemy.get_pos())
+                        break  # Don't go to next enemy
 
     def _check_enemy_bullets(self):
         for bullet in self._e_bullets:
