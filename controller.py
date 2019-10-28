@@ -247,6 +247,7 @@ class Game():
         self.screen_rect = pygame.rect.Rect(0, 0,
                                             screen_width,
                                             screen_height)
+        gameobjects.WorldHelper.screen_rect = self.screen_rect
         self.bg = gameobjects.ResourcesLoader.background('background')
 
     def pygame_events(self):

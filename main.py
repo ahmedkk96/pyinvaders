@@ -27,7 +27,9 @@ def level_test(game_manager):
     enemy_group = gameobjects.enemy_group_rect()
     world.append(enemy_group)
     enemy_group.create_enemies(10, 4, gameobjects.Enemy)
-    enemy_group.move((200, 50))
+    enemy_group.move((0, 0))
+    move = gameobjects.MovmentClassic(enemy_group)
+    world.append(move)
 
 
 clock = pygame.time.Clock()

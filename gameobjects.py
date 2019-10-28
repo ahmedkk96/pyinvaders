@@ -368,7 +368,6 @@ class EnemyGroup(GameObject):
     def __init__(self):
         super(EnemyGroup, self).__init__()
         self.enemies = []
-        self.speed.x = 20
 
     def on_remove_child(self, child):
         if len(self.enemies) == 1:
@@ -376,17 +375,11 @@ class EnemyGroup(GameObject):
         self.enemies.remove(child)
 
     def update(self, delta_time):
-        # Calculates the diff between new and old pos
-        # and adds it to all children
-        # or returns if there is no change
-        old_pos = Vector2(self._pos)  # Copy
-        super(EnemyGroup, self).update(delta_time)
-        if self._pos != old_pos:
-            self._update_pos(self._pos - old_pos)
+        pass
 
     def _update_pos(self, diff):
         for e in self.enemies:
-            e.set_pos(e.get_pos() + diff)
+            e.move(diff)
 
     def get_rect(self):
         rect = self.enemies[0].get_rect()
@@ -413,3 +406,43 @@ class enemy_group_rect(EnemyGroup):
                 e.set_pos(p)
                 self.enemies.append(e)
                 self.world_add_child(e)
+
+
+class MovmentClassic(GameObject):
+    OBJECT_TYPE = 'movement'
+    SPEED_X = 300
+    STEP_Y = 32
+    PADDING_X = 30
+
+    def __init__(self, child):
+        super(MovmentClassic, self).__init__()
+        self._child = child
+        self._rect = child.get_rect()
+        self._left = self._rect.left
+        self._right = self._rect.right
+        self.speed_x = MovmentClassic.SPEED_X
+        self.step_y = MovmentClassic.STEP_Y
+        self.dir = True
+        self._residual = 0
+
+    def update(self, delta_time):
+        offset_x = delta_time * self.speed_x
+        if not self.dir:
+            offset_x *= -1
+        offset_y = 0
+        sc = WorldHelper.screen_rect
+
+        if self._right + offset_x > sc.width:
+            offset_x = sc.width - self._right
+            offset_y = self.step_y
+            self.dir = False
+
+        if self._left + offset_x < 0:
+            offset_x = -self._left
+            offset_y = self.step_y
+            self.dir = True
+
+        self._right += offset_x
+        self._left += offset_x
+
+        self._child.move(Vector2(offset_x, offset_y))
