@@ -157,6 +157,9 @@ class GameObject:
     def set_pos(self, pos):
         self._pos = Vector2(pos)  # a copy
 
+    def move(self, offset):
+        self.set_pos(self._pos + offset)
+
     def world_add_object(self, object):
         WorldHelper.append(None, object)
 
@@ -359,14 +362,46 @@ class shield_1(Shield):
     OFF_Y = -30
 
 
-class enemy_group_rect(GameObject):
+class EnemyGroup(GameObject):
     OBJECT_TYPE = 'enemy_group'
 
     def __init__(self):
-        super(enemy_group_rect, self).__init__()
+        super(EnemyGroup, self).__init__()
         self.enemies = []
+        self.speed.x = 20
 
-    def create_enemies(self, width, height, pos, type):
+    def on_remove_child(self, child):
+        if len(self.enemies) == 1:
+            WorldHelper.remove(self)
+        self.enemies.remove(child)
+
+    def update(self, delta_time):
+        # Calculates the diff between new and old pos
+        # and adds it to all children
+        # or returns if there is no change
+        old_pos = Vector2(self._pos)  # Copy
+        super(EnemyGroup, self).update(delta_time)
+        if self._pos != old_pos:
+            self._update_pos(self._pos - old_pos)
+
+    def _update_pos(self, diff):
+        for e in self.enemies:
+            e.set_pos(e.get_pos() + diff)
+
+    def get_rect(self):
+        rect = self.enemies[0].get_rect()
+        for e in self.enemies:
+            rect.union_ip(e.get_rect())
+
+        return rect
+
+    def set_pos(self, new_pos):
+        self._update_pos(new_pos-self._pos)
+
+
+class enemy_group_rect(EnemyGroup):
+    def create_enemies(self, width, height, type):
+        pos = self._pos
         padding = 30
         for y in range(0, height):
             for x in range(0, width):
@@ -378,6 +413,3 @@ class enemy_group_rect(GameObject):
                 e.set_pos(p)
                 self.enemies.append(e)
                 self.world_add_child(e)
-
-    def on_remove_child(self, child):
-        self.enemies.remove(child)

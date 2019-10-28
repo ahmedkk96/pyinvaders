@@ -23,9 +23,11 @@ def level_test(game_manager):
     game_manager.animator.add_object_loop(player)
     player.create_shield(gameobjects.shield_1)
 
+    global enemy_group
     enemy_group = gameobjects.enemy_group_rect()
     world.append(enemy_group)
-    enemy_group.create_enemies(10, 4, (300, 200), gameobjects.Enemy)
+    enemy_group.create_enemies(10, 4, gameobjects.Enemy)
+    enemy_group.move((200, 50))
 
 
 clock = pygame.time.Clock()
@@ -55,6 +57,7 @@ while True:
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
     debugger.add('Score = {}'.format(logic.score))
+    debugger.add('eg.x = {}'.format(enemy_group.get_rect()))
     dic = game.world.get_main_dic().items()
     for type_name, array in dic:
         debugger.add('{}: {}'.format(type_name, len(array)))
