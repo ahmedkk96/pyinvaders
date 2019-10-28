@@ -18,6 +18,8 @@ class ResourcesLoader():
                     'powerup':      {'path': 'sprites/powerup.png',
                                      'tx': 1, 'ty': 1},
                     'shield_1':     {'path': 'sprites/shield_1.png',
+                                     'tx': 1, 'ty': 1},
+                    'background':     {'path': 'sprites/background.png',
                                      'tx': 1, 'ty': 1}
                     }
 
@@ -35,6 +37,11 @@ class ResourcesLoader():
     def sprite_from_path(filename, tx, ty):
         img = pygame.image.load(filename).convert_alpha()
         return Sprite(img, tx, ty)
+
+    def background(name):
+        data = ResourcesLoader.GAME_SPRITES[name]
+        img = pygame.image.load(data['path']).convert_alpha()
+        return Background(img)
 
 
 class WorldHelper:
@@ -93,6 +100,29 @@ class Sprite(pygame.sprite.Sprite):
         img = self._imgs[frame]
         rect = Rect_From_Center(pos, img.get_size())
         target_surface.blit(img, rect)
+
+
+class Background(Sprite):
+    def __init__(self, img):
+        self.image = img
+        self._size = img.get_rect()
+        self.scroll_speed = 100
+        self._y = 0
+
+    def draw(self, display, screen_rect, delta_time):
+        # Fill size with background.
+        # Always rendering more than one additional tile
+        x, y = 0, self._y - self._size.height
+        self._y += delta_time * self.scroll_speed
+        self._y %= self._size.height
+
+        while y < screen_rect.height:
+            while x < screen_rect.width:
+                targ = self._size.move(x, y)
+                display.blit(self.image, targ)
+                x += targ.width
+            x = 0
+            y += targ.height
 
 
 class GameObject:

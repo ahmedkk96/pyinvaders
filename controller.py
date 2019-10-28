@@ -247,6 +247,7 @@ class Game():
         self.screen_rect = pygame.rect.Rect(0, 0,
                                             screen_width,
                                             screen_height)
+        self.bg = gameobjects.ResourcesLoader.background('background')
 
     def pygame_events(self):
         for event in pygame.event.get():
@@ -265,7 +266,7 @@ class Game():
         dt = datetime.datetime.now()
         delta_time = (dt - self._lastdt).total_seconds()
 
-        display.fill((0, 30, 30))
+        self.bg.draw(display, self.screen_rect, delta_time)
 
         self.animator.update(delta_time)
 
