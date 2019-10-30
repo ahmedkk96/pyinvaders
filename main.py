@@ -23,16 +23,9 @@ def level_test(game_manager):
     game_manager.animator.add_object_loop(player)
     player.create_shield(gameobjects.shield_1)
 
-    global enemy_group
-    enemy_group = gameobjects.enemy_group_rect()
-    world.append(enemy_group)
-    enemy_group.create_enemies(10, 4, gameobjects.Enemy)
-    enemy_group.move((0, 0))
-    move = gameobjects.MovmentClassic(enemy_group)
-    world.append(move)
 
-    rand_shooter = gameobjects.EnemyGroupShoot(enemy_group)
-    world.append(rand_shooter)
+
+
 
 
 clock = pygame.time.Clock()

@@ -424,7 +424,7 @@ class enemy_group_rect(EnemyGroup):
 class MovmentClassic(GameObject):
     OBJECT_TYPE = 'movement'
     SPEED_X = 300
-    STEP_Y = 32
+    STEP_Y = 60
     PADDING_X = 30
 
     def __init__(self, child):

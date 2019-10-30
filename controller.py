@@ -100,6 +100,8 @@ class Logic():
         self._world = world
         self._res = gameobjects.ResourcesLoader
         self.score = 0
+        self._spawner = EnemySpwaner(self._world)
+        self._wave = self._spawner.spawn()
 
         self._e_shoot_timeout = 1
 
@@ -144,6 +146,8 @@ class Logic():
                         self._create_explosion(enemy.get_pos())
                         self.score += enemy.SCORE
                         self._drop_powerup(enemy.get_pos())
+                        if len(self._wave.enemies) == 0:
+                            self._wave = self._spawner.spawn()
                     break  # Don't go to next enemy
 
     def _check_enemy_bullets(self):
@@ -168,6 +172,31 @@ class Logic():
             if p.collides(self._player):
                 self._player.on_powerup(p)
                 self._world.remove(p)
+
+
+class EnemySpwaner:
+    def __init__(self, world):
+        self._difficulty = 0
+        self._world = world
+
+    def spawn(self):
+        enemy_group = gameobjects.enemy_group_rect()
+        enemy_group.create_enemies(10, 4, gameobjects.Enemy)
+        enemy_group.move((0, 0))
+
+        move = gameobjects.MovmentClassic(enemy_group)
+        move.speed_x *= (1 + (self._difficulty * 0.5))
+
+        rand_shooter = gameobjects.EnemyGroupShoot(enemy_group)
+        rand_shooter.max_enemies_shooting += self._difficulty * 4
+        rand_shooter.max_timeout -= self._difficulty * 0.1
+
+        self._world.append(enemy_group)
+        self._world.append(move)
+        self._world.append(rand_shooter)
+
+        self._difficulty += 1
+        return enemy_group
 
 
 class Animator():
