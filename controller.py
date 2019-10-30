@@ -136,28 +136,22 @@ class Logic():
 
     def _check_player_bullets(self):
         for bullet in self._bullets:
-            if not bullet.inside_screen(self._game.screen_rect):
-                self._world.remove(bullet)
-            else:
-                for enemy in self._enemies:
-                    if bullet.collides(enemy):
-                        self._world.remove(bullet)
-                        if enemy.take_damage(bullet.DAMAGE):
-                            self._world.remove(enemy)
-                            self._create_explosion(enemy.get_pos())
-                            self.score += enemy.SCORE
-                            self._drop_powerup(enemy.get_pos())
-                        break  # Don't go to next enemy
+            for enemy in self._enemies:
+                if bullet.collides(enemy):
+                    self._world.remove(bullet)
+                    if enemy.take_damage(bullet.DAMAGE):
+                        self._world.remove(enemy)
+                        self._create_explosion(enemy.get_pos())
+                        self.score += enemy.SCORE
+                        self._drop_powerup(enemy.get_pos())
+                    break  # Don't go to next enemy
 
     def _check_enemy_bullets(self):
         for bullet in self._e_bullets:
-            if not bullet.inside_screen(self._game.screen_rect):
+            if bullet.collides(self._player):
                 self._world.remove(bullet)
-            else:
-                if bullet.collides(self._player):
-                    self._world.remove(bullet)
-                    if self._player.take_damage(bullet.DAMAGE):
-                        print('You\'ve lost')
+                if self._player.take_damage(bullet.DAMAGE):
+                    print('You\'ve lost')
 
     def _update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()

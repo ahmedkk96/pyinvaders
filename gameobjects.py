@@ -170,6 +170,10 @@ class GameObject:
     def world_remove_object(self, object):
         WorldHelper.remove(object)
 
+    def remove_outside_screen(self):
+        if not self.get_rect().colliderect(WorldHelper.screen_rect):
+            self.world_remove_object(self)
+
 
 class SpriteGameObject(GameObject):
     '''
@@ -292,6 +296,10 @@ class bullet_1(SpriteGameObject):
         super(bullet_1, self).__init__()
         self.speed.y = -1000
 
+    def update(self, dt):
+        super(bullet_1, self).update(dt)
+        self.remove_outside_screen()
+
 
 class bullet_2(bullet_1):
     SPRITE_NAME = 'bullet_2'
@@ -342,6 +350,10 @@ class Powerup(DropItem):
     SPRITE_NAME = 'powerup'
     OBJECT_TYPE = 'powerup'
     SPEED = 300
+
+    def update(self, dt):
+        super(Powerup, self).update(dt)
+        self.remove_outside_screen()
 
 
 class Shield(HealthGameObject):
@@ -461,7 +473,7 @@ class EnemyGroupShoot(GameObject):
         super(EnemyGroupShoot, self).__init__()
         self._child = enemygroup
         self.world_add_child(enemygroup)
-        self.max_timeout = 0.5
+        self.max_timeout = 1
         self.max_enemies_shooting = 4
         self._e_shoot_timeout = self.max_timeout
 
