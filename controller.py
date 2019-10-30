@@ -55,8 +55,8 @@ class World():
         return self._all_objects
 
     def remove(self, object):
-        if object.parent is not None:
-            object.parent.on_remove_child(object)
+        for parent in object.parents:
+            parent.on_remove_child(object)
 
         g = self._objects[object.OBJECT_TYPE]
         g.remove(object)
@@ -76,7 +76,7 @@ class World():
 
     def append_child(self, parent, child):
         if parent is not None:
-            child.parent = parent
+            child.parents.append(parent)
         self.append(child)
 
 
@@ -126,7 +126,6 @@ class Logic():
     def update(self, delta_time):
         self._update_player_pos()
         self._check_player_bullets()
-        self._enemy_shoot(delta_time)
         self._check_enemy_bullets()
         self._check_powerups()
 
@@ -163,16 +162,6 @@ class Logic():
     def _update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
         self._player.set_pos(mouse_pos)
-
-    def _enemy_shoot(self, delta_time):
-        self._e_shoot_timeout -= delta_time
-        if self._e_shoot_timeout <= 0:
-            num_of_enemies = random.randint(0, 2)
-            for i in range(0, num_of_enemies):
-                enemies_count = len(self._enemies) - 1
-                enemy = self._enemies[random.randint(0, enemies_count)]
-                enemy.shoot()
-            self._e_shoot_timeout = 1
 
     def _drop_powerup(self, pos):
         if Randomizer.Drop(0.1):

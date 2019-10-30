@@ -1,5 +1,6 @@
 import pygame
 from pygame.math import Vector2
+import random
 
 
 class ResourcesLoader():
@@ -132,7 +133,7 @@ class GameObject:
         self._pos = Vector2(0, 0)
         self._size = Vector2(1, 1)
         self.speed = Vector2(0, 0)
-        self.parent = None
+        self.parents = []
 
     def update(self, delta_time):
         # Movement
@@ -417,6 +418,7 @@ class MovmentClassic(GameObject):
     def __init__(self, child):
         super(MovmentClassic, self).__init__()
         self._child = child
+        self.world_add_child(child)
         self._rect = child.get_rect()
         self._left = self._rect.left
         self._right = self._rect.right
@@ -446,3 +448,34 @@ class MovmentClassic(GameObject):
         self._left += offset_x
 
         self._child.move(Vector2(offset_x, offset_y))
+
+    def on_remove_child(self, child):
+        self._child = None
+        self.world_remove_object(self)
+
+
+class EnemyGroupShoot(GameObject):
+    OBJECT_TYPE = 'random_shooter'
+
+    def __init__(self, enemygroup):
+        super(EnemyGroupShoot, self).__init__()
+        self._child = enemygroup
+        self.world_add_child(enemygroup)
+        self.max_timeout = 0.5
+        self.max_enemies_shooting = 4
+        self._e_shoot_timeout = self.max_timeout
+
+    def update(self, delta_time):
+        self._e_shoot_timeout -= delta_time
+        enemies = self._child.enemies
+        if self._e_shoot_timeout <= 0:
+            num_of_enemies = random.randint(0, self.max_enemies_shooting)
+            enemies_count = len(enemies) - 1
+            for i in range(0, num_of_enemies):
+                enemy = enemies[random.randint(0, enemies_count)]
+                enemy.shoot()
+            self._e_shoot_timeout = self.max_timeout
+
+    def on_remove_child(self, child):
+        self._child = None
+        self.world_remove_object(self)

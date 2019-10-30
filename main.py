@@ -31,6 +31,9 @@ def level_test(game_manager):
     move = gameobjects.MovmentClassic(enemy_group)
     world.append(move)
 
+    rand_shooter = gameobjects.EnemyGroupShoot(enemy_group)
+    world.append(rand_shooter)
+
 
 clock = pygame.time.Clock()
 
@@ -59,7 +62,6 @@ while True:
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
     debugger.add('Score = {}'.format(logic.score))
-    debugger.add('eg.x = {}'.format(enemy_group.get_rect()))
     dic = game.world.get_main_dic().items()
     for type_name, array in dic:
         debugger.add('{}: {}'.format(type_name, len(array)))
