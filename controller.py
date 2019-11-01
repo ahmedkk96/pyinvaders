@@ -181,6 +181,7 @@ class Logic():
 
     def update_gui(self):
         self._gui.set_health(self._player.health/gameobjects.Player.HEALTH)
+        self._gui.set_score(self.score)
 
 
 class EnemySpwaner:
@@ -314,9 +315,14 @@ class Game():
 class GUI:
     def __init__(self):
         self._health = gameobjects.ProgressBar()
+        self._score = gameobjects.TextUI('0', (255, 0, 0), 32)
 
     def draw(self, surface):
         self._health.draw(surface, (20, 20))
+        self._score.draw(surface, (20, 60))
 
     def set_health(self, health):
         self._health.set_value(health)
+
+    def set_score(self, score):
+        self._score.set_test('Score: {}'.format(score))
