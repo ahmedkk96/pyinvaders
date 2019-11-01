@@ -17,15 +17,11 @@ pygame.mouse.set_visible(False)
 def level_test(game_manager):
     world = game_manager.world
 
+    global player
     player = gameobjects.Player()
     player.sprite.fps = 15
     world.append(player)
     game_manager.animator.add_object_loop(player)
-    player.create_shield(gameobjects.shield_1)
-
-
-
-
 
 
 clock = pygame.time.Clock()
@@ -55,6 +51,7 @@ while True:
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
     debugger.add('Score = {}'.format(logic.score))
+    debugger.add('Health = {}'.format(player.health))
     dic = game.world.get_main_dic().items()
     for type_name, array in dic:
         debugger.add('{}: {}'.format(type_name, len(array)))

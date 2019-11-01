@@ -163,11 +163,15 @@ class Logic():
 
     def _drop_powerup(self, pos):
         if Randomizer.Drop(0.1):
-            pu = self._game.create_add_go(gameobjects.Powerup)
+            rand_type = random.randint(0, 2)
+            type = [gameobjects.PowerupHealth,
+                    gameobjects.PowerupWeapon,
+                    gameobjects.PowerupShield][rand_type]
+            pu = self._game.create_add_go(type)
             pu.set_pos(pos)
 
     def _check_powerups(self):
-        powerups = self._world.get_by_type(gameobjects.Powerup)
+        powerups = self._world.get_by_type(gameobjects.DropItem)
         for p in powerups:
             if p.collides(self._player):
                 self._player.on_powerup(p)

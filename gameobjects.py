@@ -16,11 +16,15 @@ class ResourcesLoader():
                                      'tx': 1, 'ty': 1},
                     'e_bullet_1':   {'path': 'sprites/e_bullet_1.png',
                                      'tx': 1, 'ty': 1},
-                    'powerup':      {'path': 'sprites/powerup.png',
+                    'pu_weapon':    {'path': 'sprites/pu_weapon.png',
+                                     'tx': 1, 'ty': 1},
+                    'pu_health':    {'path': 'sprites/pill_green.png',
+                                     'tx': 1, 'ty': 1},
+                    'pu_shield':    {'path': 'sprites/shield_bronze.png',
                                      'tx': 1, 'ty': 1},
                     'shield_1':     {'path': 'sprites/shield_1.png',
                                      'tx': 1, 'ty': 1},
-                    'background':     {'path': 'sprites/background.png',
+                    'background':   {'path': 'sprites/background.png',
                                      'tx': 1, 'ty': 1}
                     }
 
@@ -275,10 +279,12 @@ class Player(HealthGameObject):
             self._set_shoot_mode()
 
     def on_powerup(self, powerup):
-        # Should check the type of powerup
-        # and initiate the right upgrade
-        # but let's just go easy
-        self.upgrade_shoot()
+        if powerup.PU_TYPE == 'weapon':
+            self.upgrade_shoot()
+        elif powerup.PU_TYPE == 'health':
+            self.health = 100
+        elif powerup.PU_TYPE == 'shield' and self._shield is None:
+            self.create_shield(shield_1)
 
     def create_shield(self, shield):
         sh = shield()
@@ -339,21 +345,31 @@ class Explosion(SpriteGameObject):
 
 
 class DropItem(SpriteGameObject):
-    SPEED = 0
+    OBJECT_TYPE = 'dropitem'
+    SPEED = 300
 
     def __init__(self, *args, **kwargs):
         super(DropItem, self).__init__(*args, **kwargs)
         self.speed = Vector2(0, self.SPEED)
 
-
-class Powerup(DropItem):
-    SPRITE_NAME = 'powerup'
-    OBJECT_TYPE = 'powerup'
-    SPEED = 300
-
     def update(self, dt):
-        super(Powerup, self).update(dt)
+        super(DropItem, self).update(dt)
         self.remove_outside_screen()
+
+
+class PowerupWeapon(DropItem):
+    SPRITE_NAME = 'pu_weapon'
+    PU_TYPE = 'weapon'
+
+
+class PowerupShield(DropItem):
+    SPRITE_NAME = 'pu_shield'
+    PU_TYPE = 'shield'
+
+
+class PowerupHealth(DropItem):
+    SPRITE_NAME = 'pu_health'
+    PU_TYPE = 'health'
 
 
 class Shield(HealthGameObject):
