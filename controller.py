@@ -102,6 +102,7 @@ class Logic():
         self.score = 0
         self._spawner = EnemySpwaner(self._world)
         self._wave = self._spawner.spawn()
+        self._gui = game_manager.gui
 
         self._e_shoot_timeout = 1
 
@@ -130,6 +131,7 @@ class Logic():
         self._check_player_bullets()
         self._check_enemy_bullets()
         self._check_powerups()
+        self.update_gui()
 
     def _create_explosion(self, pos):
         exp = self._game.create_add_go(gameobjects.Explosion)
@@ -176,6 +178,9 @@ class Logic():
             if p.collides(self._player):
                 self._player.on_powerup(p)
                 self._world.remove(p)
+
+    def update_gui(self):
+        self._gui.set_health(self._player.health/gameobjects.Player.HEALTH)
 
 
 class EnemySpwaner:
@@ -265,6 +270,7 @@ class Game():
                                             screen_height)
         gameobjects.WorldHelper.screen_rect = self.screen_rect
         self.bg = gameobjects.ResourcesLoader.background('background')
+        self.gui = GUI()
 
     def pygame_events(self):
         for event in pygame.event.get():
@@ -291,6 +297,8 @@ class Game():
             gobj.update(delta_time)
             gobj.draw(display)
 
+        self.gui.draw(display)
+
         self._lastdt = dt
         return delta_time
 
@@ -301,3 +309,14 @@ class Game():
 
     def add_go(self, go):
         self.world.append(go)
+
+
+class GUI:
+    def __init__(self):
+        self._health = gameobjects.ProgressBar()
+
+    def draw(self, surface):
+        self._health.draw(surface, (20, 20))
+
+    def set_health(self, health):
+        self._health.set_value(health)

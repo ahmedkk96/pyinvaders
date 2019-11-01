@@ -24,6 +24,7 @@ def level_test(game_manager):
     game_manager.animator.add_object_loop(player)
 
 
+pygame.mouse.set_pos((RES_X / 2, RES_Y * 0.9))
 clock = pygame.time.Clock()
 
 debugger = TextDebugger.Renderer()
@@ -51,7 +52,7 @@ while True:
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
     debugger.add('Score = {}'.format(logic.score))
-    debugger.add('Health = {}'.format(player.health))
+
     dic = game.world.get_main_dic().items()
     for type_name, array in dic:
         debugger.add('{}: {}'.format(type_name, len(array)))

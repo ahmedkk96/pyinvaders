@@ -507,3 +507,24 @@ class EnemyGroupShoot(GameObject):
     def on_remove_child(self, child):
         self._child = None
         self.world_remove_object(self)
+
+
+class ProgressBar:
+    WIDTH = 400
+    HEIGHT = 20
+    PADDING = 3
+
+    def __init__(self):
+        self._surf = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
+        self._rect = self._surf.get_rect()
+        self.set_value(1)
+
+    def set_value(self, val):
+        self._rect.right = self.WIDTH * val
+        self._surf.fill((255, 0, 0, 0))
+        pygame.draw.rect(self._surf, (0, 255, 0), self._rect)
+        pygame.draw.rect(self._surf, (0, 255, 255), self._surf.get_rect(), self.PADDING)
+
+
+    def draw(self, surface, pos):
+        surface.blit(self._surf, pos)
