@@ -109,6 +109,7 @@ class Logic():
         mouse.register(1, self.shoot)
         self._game.keyboard.register(97, self.upgrade_shoot)
         self._game.keyboard.register(122, self.downgrade_shoot)
+        self._game.logic = self
 
     def shoot(self, down):
         if down:
@@ -260,6 +261,8 @@ class Animator():
 
 class Game():
     def __init__(self, screen_width, screen_height):
+        self._init_window(screen_width, screen_height)
+
         self.keyboard = Input()
         self.mouse = Input()
         self.world = World()
@@ -272,6 +275,10 @@ class Game():
         gameobjects.WorldHelper.screen_rect = self.screen_rect
         self.bg = gameobjects.ResourcesLoader.background('background')
         self.gui = GUI()
+        
+        self.clock = pygame.time.Clock()
+        self.paused = False
+        self.keyboard.register(112, self.pause_key)
 
     def pygame_events(self):
         for event in pygame.event.get():
@@ -286,22 +293,18 @@ class Game():
 
         return True
 
-    def update_world(self, display):
-        dt = datetime.datetime.now()
-        delta_time = (dt - self._lastdt).total_seconds()
+    def update_world(self, delta_time):
 
-        self.bg.draw(display, self.screen_rect, delta_time)
+
+        self.bg.draw(self.display, self.screen_rect, delta_time)
 
         self.animator.update(delta_time)
 
         for gobj in self.world.get_all_objects():
             gobj.update(delta_time)
-            gobj.draw(display)
+            gobj.draw(self.display)
 
-        self.gui.draw(display)
-
-        self._lastdt = dt
-        return delta_time
+        self.gui.draw(self.display)
 
     def create_add_go(self, type):
         go = type()
@@ -310,6 +313,60 @@ class Game():
 
     def add_go(self, go):
         self.world.append(go)
+
+    def level_test(self):
+        player = gameobjects.Player()
+        player.sprite.fps = 15
+        self.world.append(player)
+        self.animator.add_object_loop(player)
+
+    def _init_window(self, x, y):
+        pygame.init()
+        self.display = pygame.display.set_mode(size=(x, y))
+        pygame.mouse.set_visible(False)
+        pygame.mouse.set_pos((x / 2, y * 0.9))
+
+    def loop(self):
+        while True:
+            tnow = datetime.datetime.now()
+            dt = (tnow - self._lastdt).total_seconds()
+            self._lastdt = tnow
+
+            if not self.pygame_events():
+                break
+
+            if not self.paused:
+                self.update_world(dt)
+                self.logic.update(dt)
+
+            fps = int(1 / dt)
+
+            # Fill background
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+
+            '''
+            debugger.clear()
+
+            # Add text here
+            debugger.add(str(fps))
+            debugger.add('Mouse X = {}'.format(mouse_x))
+            debugger.add('Mouse Y = {}'.format(mouse_y))
+            debugger.add('Score = {}'.format(logic.score))
+
+            dic = game.world.get_main_dic().items()
+            for type_name, array in dic:
+                debugger.add('{}: {}'.format(type_name, len(array)))
+
+            debugger.render(display)
+            '''
+
+            pygame.display.update()
+
+            self.clock.tick(60)
+
+    def pause_key(self, down):
+        if down:
+            self.paused = not self.paused
 
 
 class GUI:
