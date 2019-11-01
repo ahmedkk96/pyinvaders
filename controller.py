@@ -158,7 +158,7 @@ class Logic():
             if bullet.collides(self._player):
                 self._world.remove(bullet)
                 if self._player.take_damage(bullet.DAMAGE):
-                    print('You\'ve lost')
+                    self.lose()
 
     def _update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -183,6 +183,10 @@ class Logic():
     def update_gui(self):
         self._gui.set_health(self._player.health/gameobjects.Player.HEALTH)
         self._gui.set_score(self.score)
+
+    def lose(self):
+        self._game.paused = True
+        self._gui.loser()
 
 
 class EnemySpwaner:
@@ -294,8 +298,6 @@ class Game():
         return True
 
     def update_world(self, delta_time):
-
-
         self.bg.draw(self.display, self.screen_rect, delta_time)
 
         self.animator.update(delta_time)
@@ -303,8 +305,6 @@ class Game():
         for gobj in self.world.get_all_objects():
             gobj.update(delta_time)
             gobj.draw(self.display)
-
-        self.gui.draw(self.display)
 
     def create_add_go(self, type):
         go = type()
@@ -360,6 +360,7 @@ class Game():
             debugger.render(display)
             '''
 
+            self.gui.draw(self.display)
             pygame.display.update()
 
             self.clock.tick(60)
@@ -373,13 +374,20 @@ class GUI:
     def __init__(self):
         self._health = gameobjects.ProgressBar()
         self._score = gameobjects.TextUI('0', (255, 0, 0), 32)
+        self._big_message = gameobjects.TextUI('Loser', size=100)
+        self._lost = False
 
     def draw(self, surface):
         self._health.draw(surface, (20, 20))
         self._score.draw(surface, (20, 60))
+        if self._lost:
+            self._big_message.draw(surface, (500, 400))
 
     def set_health(self, health):
         self._health.set_value(health)
 
     def set_score(self, score):
         self._score.set_test('Score: {}'.format(score))
+
+    def loser(self):
+        self._lost = True
