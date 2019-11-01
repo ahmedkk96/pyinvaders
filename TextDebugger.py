@@ -15,9 +15,11 @@ class Renderer():
 
     def render(self, surface):
         y = 0
+        screen_x = surface.get_rect().width
         for text in self.lines:
             textsurf = self.font.render(
                     text, False, pygame.color.Color('white'))
 
-            surface.blit(textsurf, (0, y))
+            x = screen_x - textsurf.get_rect().width
+            surface.blit(textsurf, (x, y))
             y += self._padding
