@@ -4,8 +4,8 @@ import random
 
 
 class ResourcesLoader():
-    GAME_SPRITES = {'explosion':    {'path': 'sprites/explosion.png',
-                                     'tx': 8, 'ty': 8},
+    GAME_SPRITES = {'explosion':    {'path': 'sprites/exp.png',
+                                     'tx': 6, 'ty': 1},
                     'player':       {'path': 'sprites/player.png',
                                      'tx': 2, 'ty': 1},
                     'enemy':        {'path': 'sprites/enemyRed2.png',
@@ -342,6 +342,10 @@ class Enemy(HealthGameObject):
 class Explosion(SpriteGameObject):
     SPRITE_NAME = 'explosion'
     OBJECT_TYPE = 'explosion'
+
+    def __init__(self):
+        super(Explosion, self).__init__()
+        self.sprite.fps = 15
 
 
 class DropItem(SpriteGameObject):
