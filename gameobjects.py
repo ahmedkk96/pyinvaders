@@ -443,7 +443,7 @@ class enemy_group_rect(EnemyGroup):
 
 class MovmentClassic(GameObject):
     OBJECT_TYPE = 'movement'
-    SPEED_X = 300
+    SPEED_X = 200
     STEP_Y = 60
     PADDING_X = 30
 
@@ -493,20 +493,28 @@ class EnemyGroupShoot(GameObject):
         super(EnemyGroupShoot, self).__init__()
         self._child = enemygroup
         self.world_add_child(enemygroup)
-        self.max_timeout = 1
-        self.max_enemies_shooting = 4
-        self._e_shoot_timeout = self.max_timeout
+        self.min_timeout = 500
+        self.max_timeout = 2000
+        self.max_enemies_shooting = 1
+        self._e_shoot_timeout = 0
+
+    def _timeout(self, variance):
+        val = self.min_timeout
+        for i in range(0, variance):
+            val = max(val, random.randint(self.min_timeout, self.max_timeout))
+        return val / 1000
 
     def update(self, delta_time):
         self._e_shoot_timeout -= delta_time
         enemies = self._child.enemies
         if self._e_shoot_timeout <= 0:
-            num_of_enemies = random.randint(0, self.max_enemies_shooting)
+            num_of_enemies = random.randint(1, self.max_enemies_shooting)
             enemies_count = len(enemies) - 1
             for i in range(0, num_of_enemies):
                 enemy = enemies[random.randint(0, enemies_count)]
                 enemy.shoot()
-            self._e_shoot_timeout = self.max_timeout
+
+            self._e_shoot_timeout = self._timeout(2)
 
     def on_remove_child(self, child):
         self._child = None

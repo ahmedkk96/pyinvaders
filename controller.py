@@ -200,11 +200,11 @@ class EnemySpwaner:
         enemy_group.move((0, 0))
 
         move = gameobjects.MovmentClassic(enemy_group)
-        move.speed_x *= (1 + (self._difficulty * 0.5))
+        move.speed_x *= (1 + (self._difficulty * 0.2))
 
         rand_shooter = gameobjects.EnemyGroupShoot(enemy_group)
-        rand_shooter.max_enemies_shooting += self._difficulty * 4
-        rand_shooter.max_timeout -= self._difficulty * 0.1
+        # rand_shooter.max_enemies_shooting += self._difficulty * 4
+        rand_shooter.max_timeout -= self._difficulty * 200
 
         self._world.append(enemy_group)
         self._world.append(move)
