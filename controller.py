@@ -9,6 +9,7 @@ from pygame.locals import (
 )
 import datetime
 import random
+import TextDebugger
 
 
 class Input():
@@ -284,6 +285,8 @@ class Game():
         self.paused = False
         self.keyboard.register(112, self.pause_key)
 
+        self.debugger = TextDebugger.Renderer()
+
     def pygame_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -326,6 +329,24 @@ class Game():
         pygame.mouse.set_visible(False)
         pygame.mouse.set_pos((x / 2, y * 0.9))
 
+    def _debug(self, dt, display):
+        debugger = self.debugger
+        debugger.clear()
+
+        fps = int(1 / dt)
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        # Add text here
+        debugger.add(str(fps))
+        debugger.add('Mouse X = {}'.format(mouse_x))
+        debugger.add('Mouse Y = {}'.format(mouse_y))
+
+        dic = self.world.get_main_dic().items()
+        for type_name, array in dic:
+            debugger.add('{}: {}'.format(type_name, len(array)))
+
+        debugger.render(display)
+
     def loop(self):
         while True:
             tnow = datetime.datetime.now()
@@ -339,26 +360,8 @@ class Game():
                 self.update_world(dt)
                 self.logic.update(dt)
 
-            fps = int(1 / dt)
-
             # Fill background
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-
-            '''
-            debugger.clear()
-
-            # Add text here
-            debugger.add(str(fps))
-            debugger.add('Mouse X = {}'.format(mouse_x))
-            debugger.add('Mouse Y = {}'.format(mouse_y))
-            debugger.add('Score = {}'.format(logic.score))
-
-            dic = game.world.get_main_dic().items()
-            for type_name, array in dic:
-                debugger.add('{}: {}'.format(type_name, len(array)))
-
-            debugger.render(display)
-            '''
+            self._debug(dt, self.display)
 
             self.gui.draw(self.display)
             pygame.display.update()
