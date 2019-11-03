@@ -347,6 +347,7 @@ class Game():
             debugger.add('{}: {}'.format(type_name, len(array)))
 
         debugger.render(display)
+        # self.debug_rect(display)
 
     def loop(self):
         while True:
@@ -372,6 +373,11 @@ class Game():
     def pause_key(self, down):
         if down:
             self.paused = not self.paused
+
+    def debug_rect(self, display):
+        objs = self.world.get_all_objects()
+        for obj in objs:
+            pygame.draw.rect(display, (255, 255, 255), obj.get_rect(), 1)
 
 
 class GUI:
