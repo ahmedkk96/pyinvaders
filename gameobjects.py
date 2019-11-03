@@ -292,6 +292,12 @@ class Player(HealthGameObject):
         self._shield = sh
         self.world_add_object(sh)
 
+    def get_shield_health(self):
+        if self._shield is not None:
+            return self._shield.health
+        else:
+            return 0
+
 
 class bullet_1(SpriteGameObject):
     SPRITE_NAME = 'bullet_1'
@@ -493,7 +499,7 @@ class EnemyGroupShoot(GameObject):
         super(EnemyGroupShoot, self).__init__()
         self._child = enemygroup
         self.world_add_child(enemygroup)
-        self.min_timeout = 500
+        self.min_timeout = 100
         self.max_timeout = 2000
         self.max_enemies_shooting = 1
         self._e_shoot_timeout = 0
@@ -527,15 +533,17 @@ class ProgressBar:
     PADDING = 3
     BORDER_COLOR = (255, 255, 255)
 
-    def __init__(self):
+    def __init__(self, color_fore=(0, 255, 0), color_back=(255, 0, 0)):
+        self.color1 = color_fore
+        self.color2 = color_back
         self._surf = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
         self._rect = self._surf.get_rect()
         self.set_value(1)
 
     def set_value(self, val):
         self._rect.right = self.WIDTH * val
-        self._surf.fill((255, 0, 0, 0))
-        pygame.draw.rect(self._surf, (0, 255, 0), self._rect)
+        self._surf.fill(self.color2)
+        pygame.draw.rect(self._surf, self.color1, self._rect)
         pygame.draw.rect(self._surf, self.BORDER_COLOR,
                          self._surf.get_rect(), self.PADDING)
 
