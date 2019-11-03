@@ -283,14 +283,17 @@ class Player(HealthGameObject):
             self.upgrade_shoot()
         elif powerup.PU_TYPE == 'health':
             self.health = 100
-        elif powerup.PU_TYPE == 'shield' and self._shield is None:
+        elif powerup.PU_TYPE == 'shield':
             self.create_shield(shield_1)
 
     def create_shield(self, shield):
-        sh = shield()
-        sh.set_player(self)
-        self._shield = sh
-        self.world_add_object(sh)
+        if self._shield is None:
+            sh = shield()
+            sh.set_player(self)
+            self._shield = sh
+            self.world_add_object(sh)
+        else:
+            self._shield.health = self._shield.HEALTH
 
     def get_shield_health(self):
         if self._shield is not None:
