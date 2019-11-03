@@ -88,107 +88,110 @@ class Randomizer():
         return r < max_val
 
 
-class Logic():
-    def __init__(self, game_manager):
-        self._can_shoot = True
-        self._game = game_manager
-        world = game_manager.world
-        mouse = game_manager.mouse
+class Controls:
+    DEBUG1 = ord('a')
+    DEBUG2 = ord('z')
+    PAUSE = ord('p')
+
+    def __init__(self, player):
+        self.keyboard = Input()
+        self.keyboard.register(Controls.DEBUG1, self.debug1)
+        self.keyboard.register(Controls.DEBUG2, self.debug2)
+        self.keyboard.register(Controls.PAUSE, self._pause_event)
+
+        self.mouse = Input()
+        self.mouse.register(1, self.shoot)
+
+        self._player = player
+
+        self.on_pause = None
+
+    def debug1(self, down):
+        if down:
+            self._player.upgrade_shoot()
+
+    def debug2(self, down):
+        if down:
+            self._player.downgrade_shoot()
+
+    def shoot(self, down):
+        if down:
+            self._player.shoot()
+
+    def update_player_pos(self):
+        mouse_pos = pygame.mouse.get_pos()
+        self._player.set_pos(mouse_pos)
+
+    def _pause_event(self, down):
+        if self.on_pause is not None and down:
+            self.on_pause()
+
+
+def create_explosion(world, pos):
+    exp = gameobjects.Explosion()
+    world.append(exp)
+    exp.set_pos(pos)
+
+
+def drop_powerup(world, pos):
+    if Randomizer.Drop(0.05):
+        rand_type = random.randint(0, 2)
+        type = [gameobjects.PowerupHealth,
+                gameobjects.PowerupWeapon,
+                gameobjects.PowerupShield][rand_type]
+        pu = type()
+        world.append(pu)
+        pu.set_pos(pos)
+
+
+class Collisions:
+    '''
+    Handles events of main gameobjects collisions
+    '''
+    def __init__(self, world):
+        self._world = world
         self._player = world.get_by_type(gameobjects.Player)[0]
         self._bullets = world.get_by_type(gameobjects.bullet_1)
         self._enemies = world.get_by_type(gameobjects.Enemy)
         self._e_bullets = world.get_by_type(gameobjects.e_bullet_1)
-        self._world = world
-        self._res = gameobjects.ResourcesLoader
-        self.score = 0
-        self._spawner = EnemySpwaner(self._world)
-        self._wave = self._spawner.spawn()
-        self._gui = game_manager.gui
+        self._powerups = world.get_by_type(gameobjects.DropItem)
 
-        self._e_shoot_timeout = 1
+    def check_list(self, obj, list, callback, only_one=True):
+        for offender in list:
+            if obj.collides(offender):
+                callback(obj, offender)
+                if only_one:
+                    break
 
-        mouse.register(1, self.shoot)
-        self._game.keyboard.register(97, self.upgrade_shoot)
-        self._game.keyboard.register(122, self.downgrade_shoot)
-        self._game.logic = self
+    def on_enemy_bullet(self, bullet, enemy):
+        self._world.remove(bullet)
+        if enemy.take_damage(bullet.DAMAGE):
+            self._world.remove(enemy)
+            self._player.score += enemy.SCORE
 
-    def shoot(self, down):
-        if down:
-            if self._can_shoot:
-                self._player.shoot()
-                self._can_shoot = False
-        else:
-            self._can_shoot = True
+            create_explosion(self._world, enemy.get_pos())
+            drop_powerup(self._world, enemy.get_pos())
 
-    def upgrade_shoot(self, down):
-        if down:
-            self._player.upgrade_shoot()
+    def on_player_bullet(self, player, bullet):
+        self._world.remove(bullet)
+        if player.take_damage(bullet.DAMAGE):
+            self.lose()
 
-    def downgrade_shoot(self, down):
-        if down:
-            self._player.downgrade_shoot()
+    def on_powerup(self, player, p):
+        self._player.on_powerup(p)
+        self._world.remove(p)
 
-    def update(self, delta_time):
-        self._update_player_pos()
-        self._check_player_bullets()
-        self._check_enemy_bullets()
-        self._check_powerups()
-        self.update_gui()
-
-    def _create_explosion(self, pos):
-        exp = self._game.create_add_go(gameobjects.Explosion)
-        exp.set_pos(pos)
-        self._game.animator.add_object_onetime(exp, self._world.remove)
-
-    def _check_player_bullets(self):
+    def update(self):
+        # Check if enemy is hit
         for bullet in self._bullets:
-            for enemy in self._enemies:
-                if bullet.collides(enemy):
-                    self._world.remove(bullet)
-                    if enemy.take_damage(bullet.DAMAGE):
-                        self._world.remove(enemy)
-                        self._create_explosion(enemy.get_pos())
-                        self.score += enemy.SCORE
-                        self._drop_powerup(enemy.get_pos())
-                        if len(self._wave.enemies) == 0:
-                            self._wave = self._spawner.spawn()
-                    break  # Don't go to next enemy
+            self.check_list(bullet, self._enemies, self.on_enemy_bullet)
 
-    def _check_enemy_bullets(self):
-        for bullet in self._e_bullets:
-            if bullet.collides(self._player):
-                self._world.remove(bullet)
-                if self._player.take_damage(bullet.DAMAGE):
-                    self.lose()
+        # Check if player is hit
+        self.check_list(self._player, self._e_bullets,
+                        self.on_player_bullet, False)
 
-    def _update_player_pos(self):
-        mouse_pos = pygame.mouse.get_pos()
-        self._player.set_pos(mouse_pos)
-
-    def _drop_powerup(self, pos):
-        if Randomizer.Drop(0.1):
-            rand_type = random.randint(0, 2)
-            type = [gameobjects.PowerupHealth,
-                    gameobjects.PowerupWeapon,
-                    gameobjects.PowerupShield][rand_type]
-            pu = self._game.create_add_go(type)
-            pu.set_pos(pos)
-
-    def _check_powerups(self):
-        powerups = self._world.get_by_type(gameobjects.DropItem)
-        for p in powerups:
-            if p.collides(self._player):
-                self._player.on_powerup(p)
-                self._world.remove(p)
-
-    def update_gui(self):
-        self._gui.set_health(self._player.health/gameobjects.Player.HEALTH)
-        self._gui.set_shield(self._player.get_shield_health()/100)
-        self._gui.set_score(self.score)
-
-    def lose(self):
-        self._game.paused = True
-        self._gui.loser()
+        # Check if powerup hits player
+        self.check_list(self._player, self._powerups, self.on_powerup)
 
 
 class EnemySpwaner:
@@ -208,12 +211,15 @@ class EnemySpwaner:
         # rand_shooter.max_enemies_shooting += self._difficulty * 4
         rand_shooter.max_timeout -= self._difficulty * 200
 
-        self._world.append(enemy_group)
+        self._world.append_child(self, enemy_group)
         self._world.append(move)
         self._world.append(rand_shooter)
 
         self._difficulty += 1
-        return enemy_group
+        self.enemy_group = enemy_group
+
+    def on_remove_child(self, child):
+        self.spawn()
 
 
 class Animator():
@@ -229,7 +235,7 @@ class Animator():
         for obj, callback in self._objects_onetime.items():
             if self._update_obj(obj, delta_time):
                 to_remove.append(obj)
-                callback(obj)
+                callback()
 
         for r in to_remove:
             del self._objects_onetime[r]
@@ -268,37 +274,47 @@ class Animator():
 class Game():
     def __init__(self, screen_width, screen_height):
         self._init_window(screen_width, screen_height)
-
-        self.keyboard = Input()
-        self.mouse = Input()
-        self.world = World()
-        self.animator = Animator()
         gameobjects.ResourcesLoader.__init__()
-        self._lastdt = datetime.datetime.now()
+
+        self.animator = Animator()
+        gameobjects.WorldHelper.animator = self.animator
+
+        self.world = World()
+        player = self.level_test()
+
         self.screen_rect = pygame.rect.Rect(0, 0,
                                             screen_width,
                                             screen_height)
         gameobjects.WorldHelper.screen_rect = self.screen_rect
-        self.bg = gameobjects.ResourcesLoader.background('background')
-        self.gui = GUI()
         
-        self.clock = pygame.time.Clock()
-        self.paused = False
-        self.keyboard.register(112, self.pause_key)
+        self.bg = gameobjects.ResourcesLoader.background('background')
 
+        self.gui = GUI(player)
+
+        self.controls = Controls(player)
+        self.controls.on_pause = self.pause_key
+
+        EnemySpwaner(self.world).spawn()
+
+        self.collisions = Collisions(self.world)
+
+        self.clock = pygame.time.Clock()
         self.debugger = TextDebugger.Renderer()
+        self.paused = False
+        self._lastdt = datetime.datetime.now()
 
     def pygame_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
                 return False
             elif event.type == MOUSEBUTTONDOWN:
-                self.mouse.on_key(event.button, True)
+                self.controls.mouse.on_key(event.button, True)
             elif event.type == MOUSEBUTTONUP:
-                self.mouse.on_key(event.button, False)
+                self.controls.mouse.on_key(event.button, False)
             elif event.type == KEYUP or event.type == KEYDOWN:
-                self.keyboard.on_key(event.key, event.type == KEYDOWN)
+                self.controls.keyboard.on_key(event.key, event.type == KEYDOWN)
 
+        self.controls.update_player_pos()
         return True
 
     def update_world(self, delta_time):
@@ -310,19 +326,13 @@ class Game():
             gobj.update(delta_time)
             gobj.draw(self.display)
 
-    def create_add_go(self, type):
-        go = type()
-        self.add_go(go)
-        return go
-
-    def add_go(self, go):
-        self.world.append(go)
+        self.collisions.update()
 
     def level_test(self):
         player = gameobjects.Player()
         player.sprite.fps = 15
         self.world.append(player)
-        self.animator.add_object_loop(player)
+        return player
 
     def _init_window(self, x, y):
         pygame.init()
@@ -360,19 +370,18 @@ class Game():
 
             if not self.paused:
                 self.update_world(dt)
-                self.logic.update(dt)
 
             # Fill background
             self._debug(dt, self.display)
 
+            self.gui.update()
             self.gui.draw(self.display)
             pygame.display.update()
 
             self.clock.tick(60)
 
-    def pause_key(self, down):
-        if down:
-            self.paused = not self.paused
+    def pause_key(self):
+        self.paused = not self.paused
 
     def debug_rect(self, display):
         objs = self.world.get_all_objects()
@@ -381,12 +390,13 @@ class Game():
 
 
 class GUI:
-    def __init__(self):
+    def __init__(self, player):
         self._health = gameobjects.ProgressBar()
         self._shield = gameobjects.ProgressBar((0, 0, 255), (0, 0, 0))
         self._score = gameobjects.TextUI('0', (255, 0, 0), 32)
         self._big_message = gameobjects.TextUI('Loser', size=100)
         self._lost = False
+        self._player = player
 
     def draw(self, surface):
         self._health.draw(surface, (20, 20))
@@ -395,14 +405,12 @@ class GUI:
         if self._lost:
             self._big_message.draw(surface, (500, 400))
 
-    def set_health(self, health):
-        self._health.set_value(health)
-
-    def set_score(self, score):
-        self._score.set_test('Score: {}'.format(score))
-
-    def set_shield(self, shield_health):
-        self._shield.set_value(shield_health)
+    def update(self):
+        self._health.set_value(self._player.health /
+                               self._player.HEALTH)
+        self._shield.set_value(self._player.get_shield_health() /
+                               gameobjects.shield_1.HEALTH)
+        self._score.set_test('Score: {}'.format(self._player.score))
 
     def loser(self):
         self._lost = True

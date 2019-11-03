@@ -232,6 +232,8 @@ class Player(HealthGameObject):
                                 self._shoot_3]
         self._shooting_mode = 0
         self._shield = None
+        self.score = 0
+        WorldHelper.animator.add_object_loop(self)
 
     def take_damage(self, damage):
         if self._shield is not None:
@@ -355,6 +357,10 @@ class Explosion(SpriteGameObject):
     def __init__(self):
         super(Explosion, self).__init__()
         self.sprite.fps = 15
+        WorldHelper.animator.add_object_onetime(self, self.on_finish)
+
+    def on_finish(self):
+        self.world_remove_object(self)
 
 
 class DropItem(SpriteGameObject):
@@ -541,14 +547,17 @@ class ProgressBar:
         self.color2 = color_back
         self._surf = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
         self._rect = self._surf.get_rect()
-        self.set_value(1)
+        self._last_val = -1
+        self.set_value(0)
 
     def set_value(self, val):
-        self._rect.right = self.WIDTH * val
-        self._surf.fill(self.color2)
-        pygame.draw.rect(self._surf, self.color1, self._rect)
-        pygame.draw.rect(self._surf, self.BORDER_COLOR,
-                         self._surf.get_rect(), self.PADDING)
+        if val != self._last_val:
+            self._rect.right = self.WIDTH * val
+            self._surf.fill(self.color2)
+            pygame.draw.rect(self._surf, self.color1, self._rect)
+            pygame.draw.rect(self._surf, self.BORDER_COLOR,
+                            self._surf.get_rect(), self.PADDING)
+            self.last_val = val
 
     def draw(self, surface, pos):
         surface.blit(self._surf, pos)
@@ -558,10 +567,13 @@ class TextUI:
     def __init__(self, init_val='Testing', color=(255, 255, 255), size=24):
         self._font = pygame.font.Font(None, size)
         self.color = color
+        self._last_text = ''
         self.set_test(init_val)
 
     def draw(self, surface, pos):
         surface.blit(self._surf, pos)
 
     def set_test(self, text):
-        self._surf = self._font.render(text, False, self.color)
+        if self._last_text != text:
+            self._surf = self._font.render(text, False, self.color)
+            self._last_text = text
