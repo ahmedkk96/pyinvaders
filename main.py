@@ -7,6 +7,13 @@ RES_X = 1280
 RES_Y = 720
 
 paused = False
+dead = False
+
+
+class GameEvents:
+    def __init__(self):
+        self.on_lost = None
+        self.on_pause = None
 
 
 def init_window():
@@ -21,8 +28,24 @@ def init_window():
     return display
 
 
+def on_lost():
+    global paused, dead
+    paused = True
+    dead = True
+    game.gui.loser()
+
+
+def on_pause():
+    global paused
+    paused = not paused
+
+
+game_state = GameEvents()
+game_state.on_pause = on_pause
+game_state.on_lost = on_lost
+
 display = init_window()
-game = controller.Components()
+game = controller.Components(game_state)
 updater = controller.Updater(game)
 render = controller.Render(game, display)
 
@@ -31,7 +54,9 @@ while True:
         break
 
     dt = updater.update_all(paused)
-    render.draw(dt)
+
+    if dead or not paused:
+        render.draw(dt)
 
 
 print('Goodbye')

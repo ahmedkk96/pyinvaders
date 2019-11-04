@@ -148,13 +148,14 @@ class Collisions:
     '''
     Handles events of main gameobjects collisions
     '''
-    def __init__(self, world):
+    def __init__(self, world, on_lost):
         self._world = world
         self._player = world.get_by_type(gameobjects.Player)[0]
         self._bullets = world.get_by_type(gameobjects.bullet_1)
         self._enemies = world.get_by_type(gameobjects.Enemy)
         self._e_bullets = world.get_by_type(gameobjects.e_bullet_1)
         self._powerups = world.get_by_type(gameobjects.DropItem)
+        self._on_lost = on_lost
 
     def check_list(self, obj, list, callback, only_one=True):
         for offender in list:
@@ -175,7 +176,9 @@ class Collisions:
     def on_player_bullet(self, player, bullet):
         self._world.remove(bullet)
         if player.take_damage(bullet.DAMAGE):
-            self.lose()
+            create_explosion(self._world, player.get_pos())
+            self._world.remove(player)
+            self._on_lost()
 
     def on_powerup(self, player, p):
         self._player.on_powerup(p)
@@ -291,10 +294,10 @@ class Updater:
                 self.game.controls.keyboard.on_key(
                     event.key, event.type == KEYDOWN)
 
-        self.game.controls.update_player_pos()
         return True
 
     def update_world(self, delta_time):
+        self.game.controls.update_player_pos()
         for gobj in self.game.world.get_all_objects():
             gobj.update(delta_time)
 
@@ -358,7 +361,7 @@ class Render:
 
 
 class Components():
-    def __init__(self):
+    def __init__(self, game_state):
         self.animator = Animator()
         gameobjects.WorldHelper.animator = self.animator
 
@@ -369,19 +372,18 @@ class Components():
         self.gui = GUI(player)
 
         self.controls = Controls(player)
-        self.controls.on_pause = self.pause_key
+        self.controls.on_pause = game_state.on_pause
 
         EnemySpwaner(self.world).spawn()
 
-        self.collisions = Collisions(self.world)
+        self.collisions = Collisions(self.world, game_state.on_lost)
+
+        self.game_state = game_state
 
     def _create_player(self):
         player = gameobjects.Player()
         player.sprite.fps = 15
         return player
-
-    def pause_key(self):
-        self.paused = not self.paused
 
 
 class GUI:
