@@ -271,74 +271,66 @@ class Animator():
             self._objects_onetime[object] = callback
 
 
-class Game():
-    def __init__(self, screen_width, screen_height):
-        self._init_window(screen_width, screen_height)
-        gameobjects.ResourcesLoader.__init__()
+class Updater:
+    FPS_LIMIT = 60
 
-        self.animator = Animator()
-        gameobjects.WorldHelper.animator = self.animator
-
-        self.world = World()
-        player = self.level_test()
-
-        self.screen_rect = pygame.rect.Rect(0, 0,
-                                            screen_width,
-                                            screen_height)
-        gameobjects.WorldHelper.screen_rect = self.screen_rect
-        
-        self.bg = gameobjects.ResourcesLoader.background('background')
-
-        self.gui = GUI(player)
-
-        self.controls = Controls(player)
-        self.controls.on_pause = self.pause_key
-
-        EnemySpwaner(self.world).spawn()
-
-        self.collisions = Collisions(self.world)
-
-        self.clock = pygame.time.Clock()
-        self.debugger = TextDebugger.Renderer()
-        self.paused = False
+    def __init__(self, game):
+        self.game = game
         self._lastdt = datetime.datetime.now()
+        self.clock = pygame.time.Clock()
 
     def pygame_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
                 return False
             elif event.type == MOUSEBUTTONDOWN:
-                self.controls.mouse.on_key(event.button, True)
+                self.game.controls.mouse.on_key(event.button, True)
             elif event.type == MOUSEBUTTONUP:
-                self.controls.mouse.on_key(event.button, False)
+                self.game.controls.mouse.on_key(event.button, False)
             elif event.type == KEYUP or event.type == KEYDOWN:
-                self.controls.keyboard.on_key(event.key, event.type == KEYDOWN)
+                self.game.controls.keyboard.on_key(
+                    event.key, event.type == KEYDOWN)
 
-        self.controls.update_player_pos()
+        self.game.controls.update_player_pos()
         return True
 
     def update_world(self, delta_time):
-        self.bg.draw(self.display, self.screen_rect, delta_time)
-
-        self.animator.update(delta_time)
-
-        for gobj in self.world.get_all_objects():
+        for gobj in self.game.world.get_all_objects():
             gobj.update(delta_time)
-            gobj.draw(self.display)
 
-        self.collisions.update()
+        self.game.collisions.update()
 
-    def level_test(self):
-        player = gameobjects.Player()
-        player.sprite.fps = 15
-        self.world.append(player)
-        return player
+    def update_all(self, paused):
+        tnow = datetime.datetime.now()
+        dt = (tnow - self._lastdt).total_seconds()
+        self._lastdt = tnow
 
-    def _init_window(self, x, y):
-        pygame.init()
-        self.display = pygame.display.set_mode(size=(x, y))
-        pygame.mouse.set_visible(False)
-        pygame.mouse.set_pos((x / 2, y * 0.9))
+        if not paused:
+            self.update_world(dt)
+
+        self.game.gui.update()
+        pygame.display.update()
+
+        self.clock.tick(Updater.FPS_LIMIT)
+        return dt
+
+
+class Render:
+    def __init__(self, game, display):
+        self.bg = gameobjects.ResourcesLoader.background('background')
+        self.game = game
+        self.display = display
+        self.debugger = TextDebugger.Renderer()
+
+    def draw(self, deltatime):
+        self.game.animator.update(deltatime)
+        self.bg.draw(self.display, deltatime)
+
+        for obj in self.game.world.get_all_objects():
+            obj.draw(self.display)
+
+        self.game.gui.draw(self.display)
+        self._debug(deltatime, self.display)
 
     def _debug(self, dt, display):
         debugger = self.debugger
@@ -352,41 +344,44 @@ class Game():
         debugger.add('Mouse X = {}'.format(mouse_x))
         debugger.add('Mouse Y = {}'.format(mouse_y))
 
-        dic = self.world.get_main_dic().items()
+        dic = self.game.world.get_main_dic().items()
         for type_name, array in dic:
             debugger.add('{}: {}'.format(type_name, len(array)))
 
         debugger.render(display)
         # self.debug_rect(display)
 
-    def loop(self):
-        while True:
-            tnow = datetime.datetime.now()
-            dt = (tnow - self._lastdt).total_seconds()
-            self._lastdt = tnow
+    def debug_rect(self, display):
+        objs = self.game.world.get_all_objects()
+        for obj in objs:
+            pygame.draw.rect(display, (255, 255, 255), obj.get_rect(), 1)
 
-            if not self.pygame_events():
-                break
 
-            if not self.paused:
-                self.update_world(dt)
+class Components():
+    def __init__(self):
+        self.animator = Animator()
+        gameobjects.WorldHelper.animator = self.animator
 
-            # Fill background
-            self._debug(dt, self.display)
+        self.world = World()
+        player = self._create_player()
+        self.world.append(player)
 
-            self.gui.update()
-            self.gui.draw(self.display)
-            pygame.display.update()
+        self.gui = GUI(player)
 
-            self.clock.tick(60)
+        self.controls = Controls(player)
+        self.controls.on_pause = self.pause_key
+
+        EnemySpwaner(self.world).spawn()
+
+        self.collisions = Collisions(self.world)
+
+    def _create_player(self):
+        player = gameobjects.Player()
+        player.sprite.fps = 15
+        return player
 
     def pause_key(self):
         self.paused = not self.paused
-
-    def debug_rect(self, display):
-        objs = self.world.get_all_objects()
-        for obj in objs:
-            pygame.draw.rect(display, (255, 255, 255), obj.get_rect(), 1)
 
 
 class GUI:

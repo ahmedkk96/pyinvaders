@@ -114,9 +114,11 @@ class Background(Sprite):
         self.scroll_speed = 100
         self._y = 0
 
-    def draw(self, display, screen_rect, delta_time):
+    def draw(self, display, delta_time):
         # Fill size with background.
         # Always rendering more than one additional tile
+        screen_rect = display.get_rect()
+
         x, y = 0, self._y - self._size.height
         self._y += delta_time * self.scroll_speed
         self._y %= self._size.height
