@@ -235,6 +235,8 @@ class Player(HealthGameObject):
         self._shooting_mode = 0
         self._shield = None
         self.score = 0
+
+        self.sprite.fps = 15
         WorldHelper.animator.add_object_loop(self)
 
     def take_damage(self, damage):
@@ -558,7 +560,7 @@ class ProgressBar:
             self._surf.fill(self.color2)
             pygame.draw.rect(self._surf, self.color1, self._rect)
             pygame.draw.rect(self._surf, self.BORDER_COLOR,
-                            self._surf.get_rect(), self.PADDING)
+                             self._surf.get_rect(), self.PADDING)
             self.last_val = val
 
     def draw(self, surface, pos):

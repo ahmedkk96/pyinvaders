@@ -85,6 +85,8 @@ class World():
         # they will never be removed
         # we gotta check that one by one
         for obj in self._all_objects:
+            for parent in obj.parents:
+                parent.on_remove_child(obj)
             obj.parents.clear()
         self._all_objects.clear()
         for value in self._objects.values():
@@ -248,7 +250,7 @@ class EnemySpwaner:
 
     def reset(self):
         self._difficulty = 0
-        self.enemy_group = None
+        self.enemy_group.parents.clear()  # I don't want to respawn
 
 
 class Animator():
@@ -390,42 +392,6 @@ class Render:
             pygame.draw.rect(display, (255, 255, 255), obj.get_rect(), 1)
 
 
-class Components():
-    def __init__(self, game_state):
-        self.animator = Animator()
-        gameobjects.WorldHelper.animator = self.animator
-
-        self.world = World()
-        self.player = self._create_player()
-        self.world.append(self.player)
-
-        self.gui = GUI(self.player)
-
-        self.controls = Controls(self.player, game_state)
-        self.controls.on_pause = game_state.on_pause
-
-        self.spawner = EnemySpwaner(self.world)
-        self.spawner.spawn()
-
-        self.collisions = Collisions(self.world, game_state)
-
-        self.game_state = game_state
-
-    def _create_player(self):
-        player = gameobjects.Player()
-        player.sprite.fps = 15
-        return player
-
-    def reset(self):
-        self.world.clear()
-        self.player.__init__()
-        self.world.append(self.player)
-        self.gui.loser(False)
-        self.spawner.reset()
-        self.spawner.spawn()
-        self.animator.clear()
-
-
 class GUI:
     def __init__(self, player):
         self._health = gameobjects.ProgressBar()
@@ -451,3 +417,37 @@ class GUI:
 
     def loser(self, lost=True):
         self._lost = lost
+
+
+class Components():
+    def __init__(self, game_state):
+        self.animator = Animator()
+        gameobjects.WorldHelper.animator = self.animator
+
+        self.world = World()
+        self.player = gameobjects.Player()
+        self.world.append(self.player)
+
+        self.gui = GUI(self.player)
+
+        self.controls = Controls(self.player, game_state)
+        self.controls.on_pause = game_state.on_pause
+
+        self.spawner = EnemySpwaner(self.world)
+        self.spawner.spawn()
+
+        self.collisions = Collisions(self.world, game_state)
+
+        self.game_state = game_state
+
+    def reset(self):
+        self.spawner.reset()
+        # YOu can't clear world first
+        # this will trigger a loop of clear/respawn
+
+        self.world.clear()
+        self.player.__init__()
+        self.world.append(self.player)
+        self.gui.loser(False)
+        self.spawner.spawn()
+        self.animator.clear()
