@@ -3,8 +3,10 @@ import pygame
 import gameobjects
 import controller
 
+
 RES_X = 1280
 RES_Y = 720
+controller.EnemySpwaner.LOWER_LIMIT = RES_Y
 
 paused = False
 dead = False
@@ -33,6 +35,9 @@ def on_lost():
     global paused, dead
     paused = True
     dead = True
+
+    game.world.remove(game.player)
+    controller.create_explosion(game.world, game.player.get_pos())
     game.gui.loser()
 
 

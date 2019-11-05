@@ -200,13 +200,14 @@ class Collisions:
     def on_player_bullet(self, player, bullet):
         self._world.remove(bullet)
         if player.take_damage(bullet.DAMAGE):
-            create_explosion(self._world, player.get_pos())
-            self._world.remove(player)
             self._game_state.on_lost()
 
     def on_powerup(self, player, p):
         self._player.on_powerup(p)
         self._world.remove(p)
+
+    def on_player_enemy(self, player, enemy):
+        self._game_state.on_lost()
 
     def update(self):
         # Check if enemy is hit
@@ -220,11 +221,17 @@ class Collisions:
         # Check if powerup hits player
         self.check_list(self._player, self._powerups, self.on_powerup)
 
+        # Check player hitting enemy
+        self.check_list(self._player, self._enemies, self.on_player_enemy)
+
 
 class EnemySpwaner:
-    def __init__(self, world):
+    LOWER_LIMIT = 300
+
+    def __init__(self, world, game_state):
         self._difficulty = 0
         self._world = world
+        self._game_state = game_state
 
     def spawn(self):
         enemy_group = gameobjects.enemy_group_rect()
@@ -251,6 +258,10 @@ class EnemySpwaner:
     def reset(self):
         self._difficulty = 0
         self.enemy_group.parents.clear()  # I don't want to respawn
+
+    def update(self, delta_time):
+        if self.enemy_group.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
+            self._game_state.on_lost()
 
 
 class Animator():
@@ -330,6 +341,9 @@ class Updater:
 
     def update_world(self, delta_time):
         self.game.controls.update_player_pos()
+
+        self.game.spawner.update(delta_time)
+
         for gobj in self.game.world.get_all_objects():
             gobj.update(delta_time)
 
@@ -405,8 +419,12 @@ class GUI:
         self._health.draw(surface, (20, 20))
         self._shield.draw(surface, (20, 60))
         self._score.draw(surface, (20, 100))
+
+        rect = surface.get_rect()
+        screen_center = (rect.width/2, rect.height/2)
+        screen_center = self._big_message.top_left_to_center(screen_center)
         if self._lost:
-            self._big_message.draw(surface, (500, 400))
+            self._big_message.draw(surface, screen_center)
 
     def update(self):
         self._health.set_value(self._player.health /
@@ -433,7 +451,7 @@ class Components():
         self.controls = Controls(self.player, game_state)
         self.controls.on_pause = game_state.on_pause
 
-        self.spawner = EnemySpwaner(self.world)
+        self.spawner = EnemySpwaner(self.world, game_state)
         self.spawner.spawn()
 
         self.collisions = Collisions(self.world, game_state)

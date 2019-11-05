@@ -581,3 +581,8 @@ class TextUI:
         if self._last_text != text:
             self._surf = self._font.render(text, False, self.color)
             self._last_text = text
+
+    def top_left_to_center(self, top_left):
+        rect = self._surf.get_rect()
+        return (top_left[0] - rect.width/2,
+                top_left[1] - rect.height/2)
