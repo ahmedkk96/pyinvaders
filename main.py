@@ -2,6 +2,7 @@
 import pygame
 import gameobjects
 import controller
+from TextDebugger import Renderer as Debugger
 
 
 RES_X = 1280
@@ -54,12 +55,41 @@ def on_reset():
     paused, dead = False, False
 
 
+def debug(dt):
+    global display, game, debugger
+    debugger.clear()
+
+    fps = int(1 / dt)
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    # Add text here
+    debugger.add(str(fps))
+    debugger.add('Mouse X = {}'.format(mouse_x))
+    debugger.add('Mouse Y = {}'.format(mouse_y))
+
+    dic = game.world.get_main_dic().items()
+    for type_name, array in dic:
+        debugger.add('{}: {}'.format(type_name, len(array)))
+
+    debugger.render(display)
+
+
+def debug_rect():
+    global display, game, debugger
+    objs = game.world.get_all_objects()
+    for obj in objs:
+        pygame.draw.rect(display, (255, 255, 255), obj.get_rect(), 1)
+
+
+display = init_window()
+
+debugger = Debugger()
+
 game_state = GameEvents()
 game_state.on_pause = on_pause
 game_state.on_lost = on_lost
 game_state.on_reset = on_reset
 
-display = init_window()
 game = controller.Components(game_state)
 updater = controller.Updater(game)
 render = controller.Render(game, display)
@@ -72,6 +102,8 @@ while True:
 
     if dead or not paused:
         render.draw(dt)
+        debug(dt)
+        # debug_rect()
 
 
 print('Goodbye')

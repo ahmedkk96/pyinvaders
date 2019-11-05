@@ -369,7 +369,6 @@ class Render:
         self.bg = gameobjects.ResourcesLoader.background('background')
         self.game = game
         self.display = display
-        self.debugger = TextDebugger.Renderer()
 
     def draw(self, deltatime):
         self.game.animator.update(deltatime)
@@ -379,31 +378,6 @@ class Render:
             obj.draw(self.display)
 
         self.game.gui.draw(self.display)
-        self._debug(deltatime, self.display)
-
-    def _debug(self, dt, display):
-        debugger = self.debugger
-        debugger.clear()
-
-        fps = int(1 / dt)
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-
-        # Add text here
-        debugger.add(str(fps))
-        debugger.add('Mouse X = {}'.format(mouse_x))
-        debugger.add('Mouse Y = {}'.format(mouse_y))
-
-        dic = self.game.world.get_main_dic().items()
-        for type_name, array in dic:
-            debugger.add('{}: {}'.format(type_name, len(array)))
-
-        debugger.render(display)
-        # self.debug_rect(display)
-
-    def debug_rect(self, display):
-        objs = self.game.world.get_all_objects()
-        for obj in objs:
-            pygame.draw.rect(display, (255, 255, 255), obj.get_rect(), 1)
 
 
 class GUI:
