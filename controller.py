@@ -366,7 +366,7 @@ class Updater:
 
 class Render:
     def __init__(self, game, display):
-        self.bg = gameobjects.ResourcesLoader.background('background')
+        self.bg = gameobjects.ResourcesLoader.sprites['background']
         self.game = game
         self.display = display
 

@@ -4,48 +4,38 @@ import random
 
 
 class ResourcesLoader():
-    GAME_SPRITES = {'explosion':    {'path': 'sprites/exp.png',
-                                     'tx': 6, 'ty': 1},
-                    'player':       {'path': 'sprites/player.png',
-                                     'tx': 2, 'ty': 1},
-                    'enemy':        {'path': 'sprites/enemyRed2.png',
-                                     'tx': 1, 'ty': 1},
-                    'bullet_1':     {'path': 'sprites/laserRed01.png',
-                                     'tx': 1, 'ty': 1},
-                    'bullet_2':     {'path': 'sprites/bullet_2.png',
-                                     'tx': 1, 'ty': 1},
-                    'e_bullet_1':   {'path': 'sprites/e_bullet_1.png',
-                                     'tx': 1, 'ty': 1},
-                    'pu_weapon':    {'path': 'sprites/pu_weapon.png',
-                                     'tx': 1, 'ty': 1},
-                    'pu_health':    {'path': 'sprites/pill_green.png',
-                                     'tx': 1, 'ty': 1},
-                    'pu_shield':    {'path': 'sprites/shield_bronze.png',
-                                     'tx': 1, 'ty': 1},
-                    'shield_1':     {'path': 'sprites/shield_1.png',
-                                     'tx': 1, 'ty': 1},
-                    'background':   {'path': 'sprites/background.png',
-                                     'tx': 1, 'ty': 1}
-                    }
-
     def __init__():
-        ResourcesLoader.sprites = {}
-        for name in ResourcesLoader.GAME_SPRITES.keys():
-            sprite = ResourcesLoader.load_sprite(name)
-            ResourcesLoader.sprites[name] = sprite
+        file = open('sprites/sprites_list.csv')
+        file.readline()
 
-    def load_sprite(name):
-        data = ResourcesLoader.GAME_SPRITES[name]
-        return ResourcesLoader.sprite_from_path(
-                data['path'], data['tx'], data['ty'])
+        ResourcesLoader.sprites = {}
+
+        while True:
+            line = file.readline()
+            if line == '':
+                break
+            
+            line = line.strip()
+            data = line.split(',')
+            
+            name, path, tx, ty, fps = data
+            tx = int(tx)
+            ty = int(ty)
+            fps = int(fps)
+
+            if name == 'background':
+                sprite = ResourcesLoader.background(path)
+            else:
+                sprite = ResourcesLoader.sprite_from_path(path, tx, ty)
+
+            ResourcesLoader.sprites[name] = sprite
 
     def sprite_from_path(filename, tx, ty):
         img = pygame.image.load(filename).convert_alpha()
         return Sprite(img, tx, ty)
 
-    def background(name):
-        data = ResourcesLoader.GAME_SPRITES[name]
-        img = pygame.image.load(data['path']).convert_alpha()
+    def background(path):
+        img = pygame.image.load(path).convert_alpha()
         return Background(img)
 
 

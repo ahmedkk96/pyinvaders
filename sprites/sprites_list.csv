@@ -1,0 +1,13 @@
+name,path,tx,ty,fps
+background,sprites/background.png,1,1,0
+bullet_1,sprites/laserRed01.png,1,1,0
+bullet_2,sprites/bullet_2.png,1,1,0
+e_bullet_1,sprites/e_bullet_1.png,1,1,0
+enemy,sprites/enemyRed2.png,1,1,0
+enemy_blue2,sprites/enemyBlue2.png,1,1,0
+explosion,sprites/exp.png,6,1,0
+player,sprites/player.png,2,1,0
+pu_health,sprites/pill_green.png,1,1,0
+pu_shield,sprites/shield_bronze.png,1,1,0
+pu_weapon,sprites/pu_weapon.png,1,1,0
+shield_1,sprites/shield_1.png,1,1,0
