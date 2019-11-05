@@ -344,6 +344,11 @@ class Enemy(HealthGameObject):
         self.world_add_object(bullet)
 
 
+class EnemyBlue2(Enemy):
+    SPRITE_NAME = 'enemy_blue2'
+    HEALTH = 100
+
+
 class Explosion(SpriteGameObject):
     SPRITE_NAME = 'explosion'
     OBJECT_TYPE = 'explosion'
@@ -434,25 +439,42 @@ class EnemyGroup(GameObject):
         self._update_pos(new_pos-self._pos)
 
 
-class enemy_group_rect(EnemyGroup):
-    def create_enemies(self, width, height, type):
-        pos = self._pos
-        padding = 30
+class EnemyRect(EnemyGroup):
+    def _create_enemy(self, type, offset):
+        p = Vector2(self._pos)
+        e = type()
+        p.x += offset[0]
+        p.y += offset[1]
+        e.set_pos(p)
+        self.enemies.append(e)
+        self.world_add_child(e)
+
+    def uniform_rectangle(self, width, height, type,
+                          padding_x=70, padding_y=80):
         for y in range(0, height):
             for x in range(0, width):
-                e = type()
-                rect = e.get_rect()
-                p = Vector2(pos)
-                p.x += rect.width*x + padding
-                p.y += rect.width*y + padding
-                e.set_pos(p)
-                self.enemies.append(e)
-                self.world_add_child(e)
+                self._create_enemy(type,
+                                   (x*padding_x, y*padding_y))
+
+    def mixed_rows(self, width, types,
+                   padding_x=70, padding_y=60):
+        for y in range(0, len(types)):
+            for x in range(0, width):
+                self._create_enemy(types[y],
+                                   (x*padding_x, y*padding_y))
+
+    def random_rectangle(self, width, height, weighted,
+                         padding_x=70, padding_y=60):
+        count = height
+        for y in range(0, count):
+            for x in range(0, width):
+                self._create_enemy(weighted.roll(),
+                                   (x*padding_x, y*padding_y))
 
 
 class MovmentClassic(GameObject):
     OBJECT_TYPE = 'movement'
-    SPEED_X = 200
+    SPEED_X = 100
     STEP_Y = 60
     PADDING_X = 30
 
