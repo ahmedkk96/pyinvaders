@@ -80,6 +80,16 @@ class World():
             child.parents.append(parent)
         self.append(child)
 
+    def clear(self):
+        # if 2 objects are referencing each other
+        # they will never be removed
+        # we gotta check that one by one
+        for obj in self._all_objects:
+            obj.parents.clear()
+        self._all_objects.clear()
+        for value in self._objects.values():
+            value.clear()
+
 
 class Randomizer():
     def Drop(chance=0.2):
@@ -92,19 +102,23 @@ class Controls:
     DEBUG1 = ord('a')
     DEBUG2 = ord('z')
     PAUSE = ord('p')
+    RESET = ord('r')
+    LOSE = ord('l')
 
-    def __init__(self, player):
+    def __init__(self, player, game_state):
         self.keyboard = Input()
         self.keyboard.register(Controls.DEBUG1, self.debug1)
         self.keyboard.register(Controls.DEBUG2, self.debug2)
         self.keyboard.register(Controls.PAUSE, self._pause_event)
+        self.keyboard.register(Controls.RESET, self._reset_event)
+        self.keyboard.register(Controls.LOSE, self._lose_event)
 
         self.mouse = Input()
         self.mouse.register(1, self.shoot)
 
         self._player = player
 
-        self.on_pause = None
+        self._game_state = game_state
 
     def debug1(self, down):
         if down:
@@ -124,7 +138,15 @@ class Controls:
 
     def _pause_event(self, down):
         if self.on_pause is not None and down:
-            self.on_pause()
+            self._game_state.on_pause()
+
+    def _reset_event(self, down):
+        if down:
+            self._game_state.on_reset()
+
+    def _lose_event(self, down):
+        if down:
+            self._game_state.on_lost()
 
 
 def create_explosion(world, pos):
@@ -148,14 +170,14 @@ class Collisions:
     '''
     Handles events of main gameobjects collisions
     '''
-    def __init__(self, world, on_lost):
+    def __init__(self, world, game_state):
         self._world = world
         self._player = world.get_by_type(gameobjects.Player)[0]
         self._bullets = world.get_by_type(gameobjects.bullet_1)
         self._enemies = world.get_by_type(gameobjects.Enemy)
         self._e_bullets = world.get_by_type(gameobjects.e_bullet_1)
         self._powerups = world.get_by_type(gameobjects.DropItem)
-        self._on_lost = on_lost
+        self._game_state = game_state
 
     def check_list(self, obj, list, callback, only_one=True):
         for offender in list:
@@ -178,7 +200,7 @@ class Collisions:
         if player.take_damage(bullet.DAMAGE):
             create_explosion(self._world, player.get_pos())
             self._world.remove(player)
-            self._on_lost()
+            self._game_state.on_lost()
 
     def on_powerup(self, player, p):
         self._player.on_powerup(p)
@@ -223,6 +245,10 @@ class EnemySpwaner:
 
     def on_remove_child(self, child):
         self.spawn()
+
+    def reset(self):
+        self._difficulty = 0
+        self.enemy_group = None
 
 
 class Animator():
@@ -272,6 +298,10 @@ class Animator():
         if object not in self._objects_onetime:
             object.internal_frame = 0
             self._objects_onetime[object] = callback
+
+    def clear(self):
+        self._objects_loop.clear()
+        self._objects_onetime.clear()
 
 
 class Updater:
@@ -366,17 +396,18 @@ class Components():
         gameobjects.WorldHelper.animator = self.animator
 
         self.world = World()
-        player = self._create_player()
-        self.world.append(player)
+        self.player = self._create_player()
+        self.world.append(self.player)
 
-        self.gui = GUI(player)
+        self.gui = GUI(self.player)
 
-        self.controls = Controls(player)
+        self.controls = Controls(self.player, game_state)
         self.controls.on_pause = game_state.on_pause
 
-        EnemySpwaner(self.world).spawn()
+        self.spawner = EnemySpwaner(self.world)
+        self.spawner.spawn()
 
-        self.collisions = Collisions(self.world, game_state.on_lost)
+        self.collisions = Collisions(self.world, game_state)
 
         self.game_state = game_state
 
@@ -384,6 +415,15 @@ class Components():
         player = gameobjects.Player()
         player.sprite.fps = 15
         return player
+
+    def reset(self):
+        self.world.clear()
+        self.player.__init__()
+        self.world.append(self.player)
+        self.gui.loser(False)
+        self.spawner.reset()
+        self.spawner.spawn()
+        self.animator.clear()
 
 
 class GUI:
@@ -409,5 +449,5 @@ class GUI:
                                gameobjects.shield_1.HEALTH)
         self._score.set_test('Score: {}'.format(self._player.score))
 
-    def loser(self):
-        self._lost = True
+    def loser(self, lost=True):
+        self._lost = lost

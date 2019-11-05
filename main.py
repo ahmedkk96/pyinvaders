@@ -14,6 +14,7 @@ class GameEvents:
     def __init__(self):
         self.on_lost = None
         self.on_pause = None
+        self.on_reset = None
 
 
 def init_window():
@@ -40,9 +41,18 @@ def on_pause():
     paused = not paused
 
 
+def on_reset():
+    global game
+    global paused, dead
+    game.reset()
+
+    paused, dead = False, False
+
+
 game_state = GameEvents()
 game_state.on_pause = on_pause
 game_state.on_lost = on_lost
+game_state.on_reset = on_reset
 
 display = init_window()
 game = controller.Components(game_state)
