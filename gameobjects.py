@@ -326,10 +326,11 @@ class e_bullet_1(bullet_1):
     SPRITE_NAME = 'e_bullet_1'
     OBJECT_TYPE = 'enemy_bullet'
     DAMAGE = 25
+    SPEED = 300
 
     def __init__(self, *args, **kw):
         super(e_bullet_1, self).__init__(*args, **kw)
-        self.speed.y = 300
+        self.speed.y = self.SPEED
 
 
 class Enemy(HealthGameObject):
@@ -347,6 +348,25 @@ class Enemy(HealthGameObject):
 class EnemyBlue2(Enemy):
     SPRITE_NAME = 'enemy_blue2'
     HEALTH = 100
+
+
+class EnemyRedTargeted(Enemy):
+    SPRITE_NAME = 'enemy_red4'
+
+    def __init__(self, player):
+        super(EnemyRedTargeted, self).__init__()
+        self.player = player
+
+    def shoot(self):
+        my_pos = self.get_pos()
+        targ_pos = self.player.get_pos()
+        direction = targ_pos - my_pos
+        direction.normalize_ip()
+
+        bullet = e_bullet_1()
+        bullet.set_pos(my_pos)
+        bullet.speed = bullet.SPEED * direction
+        self.world_add_object(bullet)
 
 
 class Explosion(SpriteGameObject):

@@ -11,3 +11,4 @@ pu_health,sprites/pill_green.png,1,1,0
 pu_shield,sprites/shield_bronze.png,1,1,0
 pu_weapon,sprites/pu_weapon.png,1,1,0
 shield_1,sprites/shield_1.png,1,1,0
+enemy_red4,sprites/enemyRed4.png,1,1,0
