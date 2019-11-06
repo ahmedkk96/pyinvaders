@@ -10,6 +10,7 @@ from pygame.locals import (
 import datetime
 import random
 import TextDebugger
+import Randomizer
 
 
 class Input():
@@ -93,13 +94,6 @@ class World():
             value.clear()
 
 
-class Randomizer():
-    def Drop(chance=0.2):
-        r = random.randint(0, 100)
-        max_val = 100 * chance
-        return r < max_val
-
-
 class Controls:
     DEBUG1 = ord('a')
     DEBUG2 = ord('z')
@@ -158,7 +152,7 @@ def create_explosion(world, pos):
 
 
 def drop_powerup(world, pos):
-    if Randomizer.Drop(0.05):
+    if Randomizer.Bool(0.05):
         rand_type = random.randint(0, 2)
         type = [gameobjects.PowerupHealth,
                 gameobjects.PowerupWeapon,
@@ -234,8 +228,8 @@ class EnemySpwaner:
         self._game_state = game_state
 
     def spawn(self):
-        enemy_group = gameobjects.enemy_group_rect()
-        enemy_group.create_enemies(10, 4, gameobjects.Enemy)
+        enemy_group = gameobjects.EnemyRect()
+        enemy_group.uniform_rectangle(10, 4, gameobjects.Enemy)
         enemy_group.move((0, 0))
 
         move = gameobjects.MovmentClassic(enemy_group)
