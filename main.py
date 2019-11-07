@@ -43,7 +43,11 @@ def on_lost():
 
 
 def on_pause():
-    global paused
+    global paused, last_mouse_pos
+    if not paused:
+        last_mouse_pos = pygame.mouse.get_pos()
+    else:
+        pygame.mouse.set_pos(last_mouse_pos)
     paused = not paused
 
 

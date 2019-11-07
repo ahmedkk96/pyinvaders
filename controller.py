@@ -334,8 +334,6 @@ class Updater:
         return True
 
     def update_world(self, delta_time):
-        self.game.controls.update_player_pos()
-
         self.game.spawner.update(delta_time)
 
         for gobj in self.game.world.get_all_objects():
@@ -349,6 +347,7 @@ class Updater:
         self._lastdt = tnow
 
         if not paused:
+            self.game.controls.update_player_pos()
             self.update_world(dt)
 
         self.game.gui.update()
