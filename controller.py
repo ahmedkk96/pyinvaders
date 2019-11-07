@@ -432,8 +432,8 @@ class Components():
         # this will trigger a loop of clear/respawn
 
         self.world.clear()
+        self.animator.clear()
         self.player.__init__()
         self.world.append(self.player)
         self.gui.loser(False)
         self.spawner.spawn()
-        self.animator.clear()
