@@ -225,9 +225,15 @@ class EnemySpwaner:
     def __init__(self, world, game_state):
         self._difficulty = 0
         self._world = world
+        self._player = self._world.get_by_type(gameobjects.Player)[0]
         self._game_state = game_state
 
-    def spawn(self):
+        self.wave = None
+        self.singles = []
+        self.spawn_wave()
+        self.spawn_single()
+
+    def spawn_wave(self):
         enemy_group = gameobjects.EnemyRect()
         enemy_group.uniform_rectangle(10, 4, gameobjects.Enemy)
         enemy_group.move((0, 0))
@@ -244,17 +250,31 @@ class EnemySpwaner:
         self._world.append(rand_shooter)
 
         self._difficulty += 1
-        self.enemy_group = enemy_group
+        self.wave = enemy_group
+        enemy_group.enemies[0].go_to((0, 200), 100)
+
+    def spawn_single(self):
+        enemy = gameobjects.EnemyRedTargeted(self._player)
+        enemy.set_pos((-100, 300))
+        enemy.go_to((600, 0), 300)
+
+        self._world.append_child(self, enemy)
+        self.singles.append(enemy)
 
     def on_remove_child(self, child):
-        self.spawn()
+        if child is self.wave:
+            self.spawn_wave()
+        else:
+            self.singles.remove(child)
 
     def reset(self):
         self._difficulty = 0
-        self.enemy_group.parents.clear()  # I don't want to respawn
+        self.wave.parents.clear()  # I don't want world to notify me
+        for enemy in self.singles:
+            enemy.parents.clear()
 
     def update(self, delta_time):
-        if self.enemy_group.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
+        if self.wave.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
             self._game_state.on_lost()
 
 
@@ -419,7 +439,6 @@ class Components():
         self.controls.on_pause = game_state.on_pause
 
         self.spawner = EnemySpwaner(self.world, game_state)
-        self.spawner.spawn()
 
         self.collisions = Collisions(self.world, game_state)
 
@@ -435,4 +454,4 @@ class Components():
         self.player.__init__()
         self.world.append(self.player)
         self.gui.loser(False)
-        self.spawner.spawn()
+        self.spawner.__init__(self.world, self.game_state)

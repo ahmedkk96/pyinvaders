@@ -56,6 +56,11 @@ def Rect_From_Center(pos, size):
         return pygame.rect.Rect(tx1, ty1, size[0], size[1])
 
 
+def velocity_dir(start, end, velocity):
+    dir = (end - start).normalize()
+    return dir * velocity
+
+
 class Sprite(pygame.sprite.Sprite):
     def __init__(self, img, tiles_x, tiles_y=1):
         super(Sprite, self).__init__()
@@ -352,21 +357,27 @@ class EnemyBlue2(Enemy):
 
 class EnemyRedTargeted(Enemy):
     SPRITE_NAME = 'enemy_red4'
+    SHOOT_INTERVAL = 0.5
 
     def __init__(self, player):
         super(EnemyRedTargeted, self).__init__()
         self.player = player
+        self._shoot_interval = self.SHOOT_INTERVAL
 
     def shoot(self):
-        my_pos = self.get_pos()
-        targ_pos = self.player.get_pos()
-        direction = targ_pos - my_pos
-        direction.normalize_ip()
-
         bullet = e_bullet_1()
-        bullet.set_pos(my_pos)
-        bullet.speed = bullet.SPEED * direction
+        bullet.set_pos(self.get_pos())
+        bullet.speed = velocity_dir(self.get_pos(),
+                                    self.player.get_pos(),
+                                    bullet.SPEED)
         self.world_add_object(bullet)
+
+    def update(self, dt):
+        super(EnemyRedTargeted, self).update(dt)
+        self._shoot_interval -= dt
+        if self._shoot_interval <= 0:
+            self._shoot_interval = self.SHOOT_INTERVAL
+            self.shoot()
 
 
 class Explosion(SpriteGameObject):
@@ -470,7 +481,7 @@ class EnemyRect(EnemyGroup):
         self.world_add_child(e)
 
     def uniform_rectangle(self, width, height, type,
-                          padding_x=70, padding_y=80):
+                          padding_x=70, padding_y=60):
         for y in range(0, height):
             for x in range(0, width):
                 self._create_enemy(type,
