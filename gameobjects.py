@@ -344,6 +344,21 @@ class Enemy(HealthGameObject):
     SCORE = 10
     HEALTH = 50
 
+    def __init__(self):
+        super(Enemy, self).__init__()
+        self._movement = None
+
+    def set_movement(self, movement):
+        self._movement = movement
+
+    def update(self, dt):
+        if self._movement is not None:
+            if self._movement.update(dt):
+                self.set_pos(self._movement.get_current())
+                self._movement = None
+            else:
+                self.set_pos(self._movement.get_current())
+
     def shoot(self):
         bullet = e_bullet_1()
         bullet.set_pos(self._pos)
@@ -501,6 +516,95 @@ class EnemyRect(EnemyGroup):
             for x in range(0, width):
                 self._create_enemy(weighted.roll(),
                                    (x*padding_x, y*padding_y))
+
+
+class MovementPath():
+    '''
+    Interpolater between 0 and 1
+    0.0 is the start of animation
+    1.0 is the end
+    '''
+    def __init__(self, time):
+        self._time = time
+        self.t = 0
+        self.loop = True
+        self._dir = 1  # 1 or -1
+
+    def clamp(self):
+        if self.t > 1:
+            self.t = 1
+            if self.loop:
+                self._dir *= -1
+                return False
+            else:
+                return True
+        elif self.t < 0:
+            self.t = 0
+            if self.loop:
+                self._dir *= -1
+                return False
+            else:
+                return True
+
+    def update(self, dt):
+        self.t += (dt / self._time) * self._dir
+        return self.clamp()
+
+    def get_total_time(self):
+        return self._time
+
+
+class MovementLinear(MovementPath):
+    def __init__(self, time, p1, p2):
+        super(MovementLinear, self).__init__(time)
+        self._p1 = Vector2(p1)
+        self._p2 = Vector2(p2)
+
+    def get_current(self):
+        return self._p1.lerp(self._p2, self.t)
+
+
+class MovementLinearVel(MovementLinear):
+    def __init__(self, p1, p2, velocity):
+        self._p1 = Vector2(p1)
+        self._p2 = Vector2(p2)
+        distance = (self._p2-self._p1).magnitude()
+        self._time = distance / velocity
+        self.t = 0
+
+
+class MovementBezier(MovementPath):
+    def __init__(self, time, p0, p1, p2):
+        super(MovementBezier, self).__init__(time)
+        self._p0 = Vector2(p0)
+        self._p1 = Vector2(p1)
+        self._p2 = Vector2(p2)
+
+    def get_current(self):
+        x1 = self._p0.lerp(self._p1, self.t)
+        x2 = self._p1.lerp(self._p2, self.t)
+        return x1.lerp(x2, self.t)
+
+
+class MovementCompound(MovementPath):
+    def __init__(self, movements):
+        time = 0
+        for move in movements:
+            time += move.get_total_time()
+        super(MovementCompound, self).__init__(time)
+        self._moves = movements
+
+    def get_current(self):
+        cum_time = 0  # Add each animation total time
+        t = self.t * self._time  # convert normalized time
+        for move in self._moves:
+            last_time = cum_time  # starting time of this move
+            cum_time += move.get_total_time()  # ending time
+            if t <= cum_time:  # if t is in between start and end
+                # set move.t to (current time) - (starting time)
+                # which means convert global time to local
+                move.t = (t - last_time) / move.get_total_time()
+                return move.get_current()
 
 
 class MovmentClassic(GameObject):
