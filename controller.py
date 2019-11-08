@@ -251,12 +251,10 @@ class EnemySpwaner:
 
         self._difficulty += 1
         self.wave = enemy_group
-        enemy_group.enemies[0].go_to((0, 200), 100)
 
     def spawn_single(self):
         enemy = gameobjects.EnemyRedTargeted(self._player)
-        enemy.set_pos((-100, 300))
-        enemy.go_to((600, 0), 300)
+        enemy.set_pos((300, 300))
 
         self._world.append_child(self, enemy)
         self.singles.append(enemy)
