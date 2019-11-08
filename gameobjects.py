@@ -348,17 +348,6 @@ class Enemy(HealthGameObject):
         super(Enemy, self).__init__()
         self._movement = None
 
-    def set_movement(self, movement):
-        self._movement = movement
-
-    def update(self, dt):
-        if self._movement is not None:
-            if self._movement.update(dt):
-                self.set_pos(self._movement.get_current())
-                self._movement = None
-            else:
-                self.set_pos(self._movement.get_current())
-
     def shoot(self):
         bullet = e_bullet_1()
         bullet.set_pos(self._pos)
@@ -518,13 +507,26 @@ class EnemyRect(EnemyGroup):
                                    (x*padding_x, y*padding_y))
 
 
-class MovementPath():
+class Movement(GameObject):
+    OBJECT_TYPE = 'movement'
+
+    def set_child(self, child):
+        self.world_add_child(child)
+        self.child = child
+
+    def on_remove_child(self, child):
+        self.child = None
+        self.world_remove_object(self)
+
+
+class MovementPath(Movement):
     '''
     Interpolater between 0 and 1
     0.0 is the start of animation
     1.0 is the end
     '''
     def __init__(self, time):
+        super(MovementPath, self).__init__()
         self._time = time
         self.t = 0
         self.loop = True
@@ -548,7 +550,9 @@ class MovementPath():
 
     def update(self, dt):
         self.t += (dt / self._time) * self._dir
-        return self.clamp()
+        result = self.clamp()
+        self.child.set_pos(self.get_current())
+        return result
 
     def get_total_time(self):
         return self._time
@@ -566,11 +570,11 @@ class MovementLinear(MovementPath):
 
 class MovementLinearVel(MovementLinear):
     def __init__(self, p1, p2, velocity):
-        self._p1 = Vector2(p1)
-        self._p2 = Vector2(p2)
-        distance = (self._p2-self._p1).magnitude()
-        self._time = distance / velocity
-        self.t = 0
+        p1 = Vector2(p1)
+        p2 = Vector2(p2)
+        distance = (p2-p1).magnitude()
+        time = distance / velocity
+        super(MovementLinearVel, self).__init__(time, p1, p2)
 
 
 class MovementBezier(MovementPath):
