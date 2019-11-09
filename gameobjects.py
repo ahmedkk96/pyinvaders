@@ -529,7 +529,7 @@ class MovementPath(Movement):
         super(MovementPath, self).__init__()
         self._time = time
         self.t = 0
-        self.loop = True
+        self.loop = False
         self._dir = 1  # 1 or -1
 
     def clamp(self):
@@ -552,7 +552,8 @@ class MovementPath(Movement):
         self.t += (dt / self._time) * self._dir
         result = self.clamp()
         self.child.set_pos(self.get_current())
-        return result
+        if result:
+            self.world_remove_object(self)
 
     def get_total_time(self):
         return self._time
@@ -612,7 +613,6 @@ class MovementCompound(MovementPath):
 
 
 class MovmentClassic(GameObject):
-    OBJECT_TYPE = 'movement'
     SPEED_X = 100
     STEP_Y = 60
     PADDING_X = 30
