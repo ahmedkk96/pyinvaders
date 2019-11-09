@@ -169,9 +169,9 @@ class Collisions:
     def __init__(self, world, game_state):
         self._world = world
         self._player = world.get_by_type(gameobjects.Player)[0]
-        self._bullets = world.get_by_type(gameobjects.bullet_1)
+        self._bullets = world.get_by_type(gameobjects.Bullet)
         self._enemies = world.get_by_type(gameobjects.SimpleEnemy)
-        self._e_bullets = world.get_by_type(gameobjects.SimpleEBullet)
+        self._e_bullets = world.get_by_type(gameobjects.EBullet)
         self._powerups = world.get_by_type(gameobjects.DropItem)
         self._game_state = game_state
 
@@ -238,10 +238,12 @@ class EnemySpwaner:
         enemy_group.uniform_rectangle(10, 4, gameobjects.SimpleEnemy)
         enemy_group.move((0, 0))
 
-        move = gameobjects.MovmentClassic(enemy_group)
+        move = gameobjects.MovmentClassic()
         move.speed_x *= (1 + (self._difficulty * 0.2))
+        move.set_child(enemy_group)
 
-        rand_shooter = gameobjects.EnemyGroupShoot(enemy_group)
+        rand_shooter = gameobjects.ShooterGroup()
+        rand_shooter.set_child(enemy_group)
         # rand_shooter.max_enemies_shooting += self._difficulty * 4
         rand_shooter.max_timeout -= self._difficulty * 200
 
@@ -258,6 +260,9 @@ class EnemySpwaner:
 
         self._world.append_child(self, enemy)
         self.singles.append(enemy)
+        shooter = gameobjects.ShooterPeriodic()
+        shooter.set_child(enemy)
+        self._world.append(shooter)
 
     def on_remove_child(self, child):
         if child is self.wave:

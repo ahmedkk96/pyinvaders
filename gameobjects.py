@@ -243,19 +243,19 @@ class Player(HealthGameObject):
             return super(Player, self).take_damage(damage)
 
     def _shoot_0(self):
-        self._create_bullet(0, 0, bullet_1)
+        self._create_bullet(0, 0, Bullet)
 
     def _shoot_1(self):
-        self._create_bullet(25, 0, bullet_1)
-        self._create_bullet(-25, 0, bullet_1)
+        self._create_bullet(25, 0, Bullet)
+        self._create_bullet(-25, 0, Bullet)
 
     def _shoot_2(self):
-        self._create_bullet(0, -25, bullet_1)
+        self._create_bullet(0, -25, Bullet)
         self._shoot_1()
 
     def _shoot_3(self):
-        self._create_bullet(25, 0, bullet_2)
-        self._create_bullet(-25, 0, bullet_2)
+        self._create_bullet(25, 0, Bullet2)
+        self._create_bullet(-25, 0, Bullet2)
 
     def _create_bullet(self, offset_x, offset_y, type):
         b = type()
@@ -303,44 +303,37 @@ class Player(HealthGameObject):
             return 0
 
 
-class bullet_1(SpriteGameObject):
+class Bullet(SpriteGameObject):
     SPRITE_NAME = 'bullet_1'
     OBJECT_TYPE = 'bullet'
     DAMAGE = 25
+    SPEED = -1000
 
     def __init__(self):
-        super(bullet_1, self).__init__()
-        self.speed.y = -1000
+        super(Bullet, self).__init__()
+        self.speed.y = self.SPEED
 
     def update(self, dt):
-        super(bullet_1, self).update(dt)
+        super(Bullet, self).update(dt)
         self.remove_outside_screen()
 
 
-class bullet_2(bullet_1):
+class Bullet2(Bullet):
     SPRITE_NAME = 'bullet_2'
     OBJECT_TYPE = 'bullet'
     DAMAGE = 50
 
-    def __init__(self):
-        super(bullet_1, self).__init__()
-        self.speed.y = -1000
 
-
-class SimpleEBullet(bullet_1):
+class EBullet(Bullet):
     SPRITE_NAME = 'e_bullet_1'
     OBJECT_TYPE = 'enemy_bullet'
     DAMAGE = 25
     SPEED = 300
 
-    def __init__(self):
-        super(SimpleEBullet, self).__init__()
-        self.speed.y = self.SPEED
 
-
-class TargetedEBullet(SimpleEBullet):
+class EBulletTargeted(EBullet):
     def __init__(self, pos, target):
-        super(TargetedEBullet, self).__init__()
+        super(EBulletTargeted, self).__init__()
         self.set_pos(pos)
         self.speed = velocity_dir(pos,
                                   target,
@@ -357,7 +350,7 @@ class SimpleEnemy(HealthGameObject):
         super(SimpleEnemy, self).__init__()
 
     def shoot(self):
-        bullet = SimpleEBullet()
+        bullet = EBullet()
         bullet.set_pos(self._pos)
         self.world_add_object(bullet)
 
@@ -369,15 +362,14 @@ class SimpleEnemy2(SimpleEnemy):
 
 class EnemyTargtedBullet(SimpleEnemy):
     SPRITE_NAME = 'enemy_red4'
-    SHOOT_INTERVAL = 0.5
+    HEALTH = 100
 
     def __init__(self, player):
         super(EnemyTargtedBullet, self).__init__()
         self.player = player
-        self._shoot_interval = self.SHOOT_INTERVAL
 
     def shoot(self):
-        bullet = TargetedEBullet(self.get_pos(),
+        bullet = EBulletTargeted(self.get_pos(),
                                  self.player.get_pos())
 
         self.world_add_object(bullet)
@@ -506,7 +498,7 @@ class EnemyRect(EnemyGroup):
                                    (x*padding_x, y*padding_y))
 
 
-class Movement(GameObject):
+class Parent(GameObject):
     OBJECT_TYPE = 'movement'
 
     def set_child(self, child):
@@ -518,7 +510,7 @@ class Movement(GameObject):
         self.world_remove_object(self)
 
 
-class MovementPath(Movement):
+class MovementPath(Parent):
     '''
     Interpolater between 0 and 1
     0.0 is the start of animation
@@ -611,22 +603,23 @@ class MovementCompound(MovementPath):
                 return move.get_current()
 
 
-class MovmentClassic(GameObject):
+class MovmentClassic(Parent):
     SPEED_X = 100
     STEP_Y = 60
     PADDING_X = 30
 
-    def __init__(self, child):
+    def __init__(self):
         super(MovmentClassic, self).__init__()
-        self._child = child
-        self.world_add_child(child)
-        self._rect = child.get_rect()
-        self._left = self._rect.left
-        self._right = self._rect.right
         self.speed_x = MovmentClassic.SPEED_X
         self.step_y = MovmentClassic.STEP_Y
         self.dir = True
         self._residual = 0
+
+    def set_child(self, child):
+        super(MovmentClassic, self).set_child(child)
+        self._rect = child.get_rect()
+        self._left = self._rect.left
+        self._right = self._rect.right
 
     def update(self, delta_time):
         offset_x = delta_time * self.speed_x
@@ -648,24 +641,45 @@ class MovmentClassic(GameObject):
         self._right += offset_x
         self._left += offset_x
 
-        self._child.move(Vector2(offset_x, offset_y))
+        self.child.move(Vector2(offset_x, offset_y))
 
     def on_remove_child(self, child):
         self._child = None
         self.world_remove_object(self)
 
 
-class EnemyGroupShoot(GameObject):
+class ShooterPeriodic(Parent):
+    OBJECT_TYPE = 'shooter_pattern'
+    INTERVAL = 1.0
+
+    def __init__(self):
+        super(ShooterPeriodic, self).__init__()
+        self.interval = self.INTERVAL
+        self._time = self.interval
+
+    def set_interval(self, interval):
+        self.interval = interval
+        self._time = interval
+
+    def update(self, dt):
+        self._time -= dt
+        if self._time <= 0:
+            self._time = self.interval
+            self.shoot()
+
+    def shoot(self):
+        self.child.shoot()
+
+
+class ShooterGroup(ShooterPeriodic):
     OBJECT_TYPE = 'random_shooter'
 
-    def __init__(self, enemygroup):
-        super(EnemyGroupShoot, self).__init__()
-        self._child = enemygroup
-        self.world_add_child(enemygroup)
+    def __init__(self):
+        super(ShooterGroup, self).__init__()
         self.min_timeout = 100
         self.max_timeout = 2000
         self.max_enemies_shooting = 1
-        self._e_shoot_timeout = 0
+        self.set_interval(0)
 
     def _timeout(self, variance):
         val = self.min_timeout
@@ -673,21 +687,15 @@ class EnemyGroupShoot(GameObject):
             val = max(val, random.randint(self.min_timeout, self.max_timeout))
         return val / 1000
 
-    def update(self, delta_time):
-        self._e_shoot_timeout -= delta_time
-        enemies = self._child.enemies
-        if self._e_shoot_timeout <= 0:
-            num_of_enemies = random.randint(1, self.max_enemies_shooting)
-            enemies_count = len(enemies) - 1
-            for i in range(0, num_of_enemies):
-                enemy = enemies[random.randint(0, enemies_count)]
-                enemy.shoot()
+    def shoot(self):
+        enemies = self.child.enemies
+        num_of_enemies = random.randint(1, self.max_enemies_shooting)
+        enemies_count = len(enemies) - 1
+        for i in range(0, num_of_enemies):
+            enemy = enemies[random.randint(0, enemies_count)]
+            enemy.shoot()
 
-            self._e_shoot_timeout = self._timeout(2)
-
-    def on_remove_child(self, child):
-        self._child = None
-        self.world_remove_object(self)
+        self.set_interval(self._timeout(2))
 
 
 class ProgressBar:
