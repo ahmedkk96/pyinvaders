@@ -170,7 +170,7 @@ class Collisions:
         self._world = world
         self._player = world.get_by_type(gameobjects.Player)[0]
         self._bullets = world.get_by_type(gameobjects.Bullet)
-        self._enemies = world.get_by_type(gameobjects.SimpleEnemy)
+        self._enemies = world.get_by_type(gameobjects.Enemy)
         self._e_bullets = world.get_by_type(gameobjects.EBullet)
         self._powerups = world.get_by_type(gameobjects.DropItem)
         self._game_state = game_state
@@ -235,7 +235,7 @@ class EnemySpwaner:
 
     def spawn_wave(self):
         enemy_group = gameobjects.EnemyRect()
-        enemy_group.uniform_rectangle(10, 4, gameobjects.SimpleEnemy)
+        enemy_group.uniform_rectangle(10, 4, gameobjects.Enemy)
         enemy_group.move((0, 0))
 
         move = gameobjects.MovmentClassic()
@@ -255,7 +255,7 @@ class EnemySpwaner:
         self.wave = enemy_group
 
     def spawn_single(self):
-        enemy = gameobjects.EnemyTargtedBullet(self._player)
+        enemy = gameobjects.EnemyDiver()
         enemy.set_pos((300, 300))
 
         self._world.append_child(self, enemy)

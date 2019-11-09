@@ -340,14 +340,11 @@ class EBulletTargeted(EBullet):
                                   self.SPEED)
 
 
-class SimpleEnemy(HealthGameObject):
+class Enemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
     SCORE = 10
     HEALTH = 50
-
-    def __init__(self):
-        super(SimpleEnemy, self).__init__()
 
     def shoot(self):
         bullet = EBullet()
@@ -355,12 +352,22 @@ class SimpleEnemy(HealthGameObject):
         self.world_add_object(bullet)
 
 
-class SimpleEnemy2(SimpleEnemy):
+class Enemy2(Enemy):
     SPRITE_NAME = 'enemy_blue2'
     HEALTH = 100
 
 
-class EnemyTargtedBullet(SimpleEnemy):
+class EnemyDiver(Enemy):
+    DIVE_SPEED = 500
+    ACCEL_TIME = 1
+
+    def dive(self):
+        move = MovementAccelDown(self.ACCEL_TIME, self.DIVE_SPEED)
+        move.set_child(self)
+        self.world_add_object(move)
+
+
+class EnemyTargtedBullet(Enemy):
     SPRITE_NAME = 'enemy_red4'
     HEALTH = 100
 
@@ -601,6 +608,22 @@ class MovementCompound(MovementPath):
                 # which means convert global time to local
                 move.t = (t - last_time) / move.get_total_time()
                 return move.get_current()
+
+
+class MovementAccelDown(Parent):
+    def __init__(self, time, max_vel):
+        super(MovementAccelDown, self).__init__()
+        self.accel = max_vel / time
+        self.max_vel = max_vel
+        self.cur_vel = 0
+
+    def update(self, dt):
+        if self.cur_vel < self.max_vel:
+            self.cur_vel += dt * self.accel
+        else:
+            self.cur_vel = self.max_vel
+        self.child.speed.y = self.cur_vel
+        self.child.remove_outside_screen()
 
 
 class MovmentClassic(Parent):
