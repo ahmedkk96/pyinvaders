@@ -327,61 +327,60 @@ class bullet_2(bullet_1):
         self.speed.y = -1000
 
 
-class e_bullet_1(bullet_1):
+class SimpleEBullet(bullet_1):
     SPRITE_NAME = 'e_bullet_1'
     OBJECT_TYPE = 'enemy_bullet'
     DAMAGE = 25
     SPEED = 300
 
-    def __init__(self, *args, **kw):
-        super(e_bullet_1, self).__init__(*args, **kw)
+    def __init__(self):
+        super(SimpleEBullet, self).__init__()
         self.speed.y = self.SPEED
 
 
-class Enemy(HealthGameObject):
+class TargetedEBullet(SimpleEBullet):
+    def __init__(self, pos, target):
+        super(TargetedEBullet, self).__init__()
+        self.set_pos(pos)
+        self.speed = velocity_dir(pos,
+                                  target,
+                                  self.SPEED)
+
+
+class SimpleEnemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
     SCORE = 10
     HEALTH = 50
 
     def __init__(self):
-        super(Enemy, self).__init__()
-        self._movement = None
+        super(SimpleEnemy, self).__init__()
 
     def shoot(self):
-        bullet = e_bullet_1()
+        bullet = SimpleEBullet()
         bullet.set_pos(self._pos)
         self.world_add_object(bullet)
 
 
-class EnemyBlue2(Enemy):
+class SimpleEnemy2(SimpleEnemy):
     SPRITE_NAME = 'enemy_blue2'
     HEALTH = 100
 
 
-class EnemyRedTargeted(Enemy):
+class EnemyTargtedBullet(SimpleEnemy):
     SPRITE_NAME = 'enemy_red4'
     SHOOT_INTERVAL = 0.5
 
     def __init__(self, player):
-        super(EnemyRedTargeted, self).__init__()
+        super(EnemyTargtedBullet, self).__init__()
         self.player = player
         self._shoot_interval = self.SHOOT_INTERVAL
 
     def shoot(self):
-        bullet = e_bullet_1()
-        bullet.set_pos(self.get_pos())
-        bullet.speed = velocity_dir(self.get_pos(),
-                                    self.player.get_pos(),
-                                    bullet.SPEED)
-        self.world_add_object(bullet)
+        bullet = TargetedEBullet(self.get_pos(),
+                                 self.player.get_pos())
 
-    def update(self, dt):
-        super(EnemyRedTargeted, self).update(dt)
-        self._shoot_interval -= dt
-        if self._shoot_interval <= 0:
-            self._shoot_interval = self.SHOOT_INTERVAL
-            self.shoot()
+        self.world_add_object(bullet)
 
 
 class Explosion(SpriteGameObject):
