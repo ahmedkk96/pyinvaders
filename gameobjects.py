@@ -343,6 +343,7 @@ class EBulletTargeted(EBullet):
 class Enemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
+    ENEMY_TYPE = 'simple'
     SCORE = 10
     HEALTH = 50
 
@@ -360,6 +361,7 @@ class Enemy2(Enemy):
 class EnemyDiver(Enemy):
     DIVE_SPEED = 500
     ACCEL_TIME = 1
+    ENEMY_TYPE = 'diver'
 
     def dive(self):
         move = MovementAccelDown(self.ACCEL_TIME, self.DIVE_SPEED)
@@ -370,6 +372,7 @@ class EnemyDiver(Enemy):
 class EnemyTargtedBullet(Enemy):
     SPRITE_NAME = 'enemy_red4'
     HEALTH = 100
+    ENEMY_TYPE = 'targeted_bullet'
 
     def __init__(self, player):
         super(EnemyTargtedBullet, self).__init__()
@@ -447,29 +450,61 @@ class EnemyGroup(GameObject):
 
     def __init__(self):
         super(EnemyGroup, self).__init__()
-        self.enemies = []
+        self.enemies = {}
+        self.all_enemies = []
+
+    def append(self, enemy):
+        if enemy.ENEMY_TYPE in self.enemies:
+            self.enemies[enemy.ENEMY_TYPE].append(enemy)
+            self.all_enemies.append(enemy)
+        else:
+            self.enemies[enemy.ENEMY_TYPE] = []
+            self.append(enemy)
+
+    def dive(self):
+        divers = self.enemies_by_type(EnemyDiver)
+        if divers is not None and len(divers) > 0:
+            rand = random.randrange(len(divers))
+            divers[rand].dive()
+            divers[rand].parents.remove(self)
+            self.on_remove_child(divers[rand])
+            return True
+        return False
+
+    def shoot(self):
+        enemies = self.all_enemies
+        enemies_count = len(enemies) - 1
+        enemy = enemies[random.randint(0, enemies_count)]
+        enemy.shoot()
 
     def on_remove_child(self, child):
-        if len(self.enemies) == 1:
+        if len(self.all_enemies) == 1:
             WorldHelper.remove(self)
-        self.enemies.remove(child)
+        self.enemies[child.ENEMY_TYPE].remove(child)
+        self.all_enemies.remove(child)
 
     def update(self, delta_time):
         pass
 
     def _update_pos(self, diff):
-        for e in self.enemies:
+        for e in self.all_enemies:
             e.move(diff)
 
     def get_rect(self):
-        rect = self.enemies[0].get_rect()
-        for e in self.enemies:
+        rect = self.all_enemies[0].get_rect()
+        for e in self.all_enemies:
             rect.union_ip(e.get_rect())
 
         return rect
 
     def set_pos(self, new_pos):
         self._update_pos(new_pos-self._pos)
+
+    def enemies_by_type(self, type):
+        if type.ENEMY_TYPE in self.enemies:
+            return self.enemies[type.ENEMY_TYPE]
+        else:
+            return None
 
 
 class EnemyRect(EnemyGroup):
@@ -479,7 +514,7 @@ class EnemyRect(EnemyGroup):
         p.x += offset[0]
         p.y += offset[1]
         e.set_pos(p)
-        self.enemies.append(e)
+        self.append(e)
         self.world_add_child(e)
 
     def uniform_rectangle(self, width, height, type,
@@ -677,48 +712,60 @@ class ShooterPeriodic(Parent):
 
     def __init__(self):
         super(ShooterPeriodic, self).__init__()
-        self.interval = self.INTERVAL
-        self._time = self.interval
+        self.set_interval(self.INTERVAL)
 
     def set_interval(self, interval):
         self.interval = interval
         self._time = interval
 
+    def reset_clock(self):
+        self._time = self.interval
+
     def update(self, dt):
         self._time -= dt
         if self._time <= 0:
-            self._time = self.interval
+            self.reset_clock()
             self.shoot()
 
     def shoot(self):
         self.child.shoot()
 
 
-class ShooterGroup(ShooterPeriodic):
-    OBJECT_TYPE = 'random_shooter'
+class ShooterPeriodicVary(ShooterPeriodic):
+    def __init__(self):
+        super(ShooterPeriodicVary, self).__init__()
+        self.min_timeout = 0.1
+        self.max_timeout = 2
+        self.variance = 1
+        self.reset_clock()
 
+    def reset_clock(self):
+        tmin = self.min_timeout * 1000
+        tmax = self.max_timeout * 1000
+        val = tmin
+        for i in range(0, self.variance):
+            val = max(val, random.randint(tmin, tmax))
+        self.set_interval(val / 1000)
+
+
+class ShooterGroup(ShooterPeriodicVary):
     def __init__(self):
         super(ShooterGroup, self).__init__()
-        self.min_timeout = 100
-        self.max_timeout = 2000
         self.max_enemies_shooting = 1
-        self.set_interval(0)
-
-    def _timeout(self, variance):
-        val = self.min_timeout
-        for i in range(0, variance):
-            val = max(val, random.randint(self.min_timeout, self.max_timeout))
-        return val / 1000
 
     def shoot(self):
-        enemies = self.child.enemies
         num_of_enemies = random.randint(1, self.max_enemies_shooting)
-        enemies_count = len(enemies) - 1
         for i in range(0, num_of_enemies):
-            enemy = enemies[random.randint(0, enemies_count)]
-            enemy.shoot()
+            self.child.shoot()
 
-        self.set_interval(self._timeout(2))
+
+class ShooterGroupDiver(ShooterGroup):
+    OBJECT_TYPE = 'shooter_pattern_diver'
+
+    def shoot(self):
+        if not self.child.dive():
+            self.world_remove_object(self)
+            self.child.parents.remove(self)
 
 
 class ProgressBar:

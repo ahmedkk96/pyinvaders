@@ -235,7 +235,10 @@ class EnemySpwaner:
 
     def spawn_wave(self):
         enemy_group = gameobjects.EnemyRect()
-        enemy_group.uniform_rectangle(10, 4, gameobjects.Enemy)
+        enemy_group.mixed_rows(10, [gameobjects.Enemy,
+                                    gameobjects.Enemy,
+                                    gameobjects.Enemy,
+                                    gameobjects.EnemyDiver])
         enemy_group.move((0, 0))
 
         move = gameobjects.MovmentClassic()
@@ -245,7 +248,13 @@ class EnemySpwaner:
         rand_shooter = gameobjects.ShooterGroup()
         rand_shooter.set_child(enemy_group)
         # rand_shooter.max_enemies_shooting += self._difficulty * 4
-        rand_shooter.max_timeout -= self._difficulty * 200
+        rand_shooter.max_timeout -= self._difficulty * 0.2
+
+        rand_diver = gameobjects.ShooterGroupDiver()
+        rand_diver.set_child(enemy_group)
+        rand_diver.max_timeout = 10
+        rand_diver.min_timeout = 5
+        self._world.append(rand_diver)
 
         self._world.append_child(self, enemy_group)
         self._world.append(move)
