@@ -14,10 +14,10 @@ class ResourcesLoader():
             line = file.readline()
             if line == '':
                 break
-            
+
             line = line.strip()
             data = line.split(',')
-            
+
             name, path, tx, ty, fps = data
             tx = int(tx)
             ty = int(ty)
@@ -45,9 +45,10 @@ class WorldHelper:
     between gameobject instances and world
     (world global variable)
     '''
-    def init(append_object, remove_object):
-        WorldHelper.append = append_object
-        WorldHelper.remove = remove_object
+    append = None
+    remove = None
+    animator = None
+    screen_rect = None
 
 
 def Rect_From_Center(pos, size):
@@ -134,7 +135,7 @@ class GameObject:
         self._pos = Vector2(0, 0)
         self._size = Vector2(1, 1)
         self.speed = Vector2(0, 0)
-        self.parents = []
+        self.on_removed_event = []
 
     def update(self, delta_time):
         # Movement
@@ -162,18 +163,14 @@ class GameObject:
     def move(self, offset):
         self.set_pos(self._pos + offset)
 
-    def world_add_object(self, object):
-        WorldHelper.append(None, object)
-
-    def world_add_child(self, child):
-        WorldHelper.append(self, child)
-
-    def world_remove_object(self, object):
-        WorldHelper.remove(object)
-
     def remove_outside_screen(self):
         if not self.get_rect().colliderect(WorldHelper.screen_rect):
-            self.world_remove_object(self)
+            WorldHelper.remove(self)
+
+    def on_world_remove(self):
+        # notify listeners for remove event
+        for event in self.on_removed_event:
+            event(self)
 
 
 class SpriteGameObject(GameObject):
@@ -260,7 +257,7 @@ class Player(HealthGameObject):
     def _create_bullet(self, offset_x, offset_y, type):
         b = type()
         b.set_pos(self._pos + Vector2(offset_x, offset_y))
-        self.world_add_object(b)
+        WorldHelper.append(b)
 
     def _set_shoot_mode(self):
         self.shoot = self._shooting_modes[self._shooting_mode]
@@ -292,7 +289,7 @@ class Player(HealthGameObject):
             sh = shield()
             sh.set_player(self)
             self._shield = sh
-            self.world_add_object(sh)
+            WorldHelper.append(sh)
         else:
             self._shield.health = self._shield.HEALTH
 
@@ -350,7 +347,7 @@ class Enemy(HealthGameObject):
     def shoot(self):
         bullet = EBullet()
         bullet.set_pos(self._pos)
-        self.world_add_object(bullet)
+        WorldHelper.append(bullet)
 
 
 class Enemy2(Enemy):
@@ -366,7 +363,7 @@ class EnemyDiver(Enemy):
     def dive(self):
         move = MovementAccelDown(self.ACCEL_TIME, self.DIVE_SPEED)
         move.set_child(self)
-        self.world_add_object(move)
+        WorldHelper.append(move)
 
 
 class EnemyTargtedBullet(Enemy):
@@ -382,7 +379,7 @@ class EnemyTargtedBullet(Enemy):
         bullet = EBulletTargeted(self.get_pos(),
                                  self.player.get_pos())
 
-        self.world_add_object(bullet)
+        WorldHelper.append(bullet)
 
 
 class Explosion(SpriteGameObject):
@@ -395,7 +392,7 @@ class Explosion(SpriteGameObject):
         WorldHelper.animator.add_object_onetime(self, self.on_finish)
 
     def on_finish(self):
-        self.world_remove_object(self)
+        WorldHelper.remove(self)
 
 
 class DropItem(SpriteGameObject):
@@ -457,6 +454,8 @@ class EnemyGroup(GameObject):
         if enemy.ENEMY_TYPE in self.enemies:
             self.enemies[enemy.ENEMY_TYPE].append(enemy)
             self.all_enemies.append(enemy)
+            enemy.on_removed_event.append(self.on_child_removed)
+            WorldHelper.append(enemy)
         else:
             self.enemies[enemy.ENEMY_TYPE] = []
             self.append(enemy)
@@ -466,8 +465,12 @@ class EnemyGroup(GameObject):
         if divers is not None and len(divers) > 0:
             rand = random.randrange(len(divers))
             divers[rand].dive()
-            divers[rand].parents.remove(self)
-            self.on_remove_child(divers[rand])
+
+            # It's not actually removed,
+            # but it just separated
+            # unsub from (onremoved) event
+            divers[rand].on_removed_event.remove(self.on_child_removed)
+            self.on_child_removed(divers[rand])
             return True
         return False
 
@@ -477,7 +480,7 @@ class EnemyGroup(GameObject):
         enemy = enemies[random.randint(0, enemies_count)]
         enemy.shoot()
 
-    def on_remove_child(self, child):
+    def on_child_removed(self, child):
         if len(self.all_enemies) == 1:
             WorldHelper.remove(self)
         self.enemies[child.ENEMY_TYPE].remove(child)
@@ -515,7 +518,6 @@ class EnemyRect(EnemyGroup):
         p.y += offset[1]
         e.set_pos(p)
         self.append(e)
-        self.world_add_child(e)
 
     def uniform_rectangle(self, width, height, type,
                           padding_x=70, padding_y=60):
@@ -541,18 +543,28 @@ class EnemyRect(EnemyGroup):
 
 
 class Parent(GameObject):
+    '''
+    This class is a parent for one object,
+    removes itself when child is removed from world
+    '''
+    def set_child(self, child):
+        self.child = child
+        self.child.on_removed_event.append(self.on_child_removed)
+
+    def on_child_removed(self, child):
+        self.child = None
+        WorldHelper.remove(self)
+
+    def remove_self(self):
+        self.child.on_removed_event.remove(self.on_child_removed)
+        WorldHelper.remove(self)
+
+
+class Movement(Parent):
     OBJECT_TYPE = 'movement'
 
-    def set_child(self, child):
-        self.world_add_child(child)
-        self.child = child
 
-    def on_remove_child(self, child):
-        self.child = None
-        self.world_remove_object(self)
-
-
-class MovementPath(Parent):
+class MovementPath(Movement):
     '''
     Interpolater between 0 and 1
     0.0 is the start of animation
@@ -701,10 +713,6 @@ class MovmentClassic(Parent):
 
         self.child.move(Vector2(offset_x, offset_y))
 
-    def on_remove_child(self, child):
-        self._child = None
-        self.world_remove_object(self)
-
 
 class ShooterPeriodic(Parent):
     OBJECT_TYPE = 'shooter_pattern'
@@ -764,8 +772,7 @@ class ShooterGroupDiver(ShooterGroup):
 
     def shoot(self):
         if not self.child.dive():
-            self.world_remove_object(self)
-            self.child.parents.remove(self)
+            self.remove_self()
 
 
 class ProgressBar:

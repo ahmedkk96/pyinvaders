@@ -9,7 +9,6 @@ from pygame.locals import (
 )
 import datetime
 import random
-import TextDebugger
 import Randomizer
 
 
@@ -34,8 +33,8 @@ class World():
         # Contains all objects
         self._all_objects = []
 
-        gameobjects.WorldHelper.init(self.append_child,
-                                     self.remove)
+        gameobjects.WorldHelper.append = self.append
+        gameobjects.WorldHelper.remove = self.remove
 
     def append(self, object):
         type_name = object.OBJECT_TYPE
@@ -57,9 +56,7 @@ class World():
         return self._all_objects
 
     def remove(self, object):
-        for parent in object.parents:
-            parent.on_remove_child(object)
-
+        object.on_world_remove()
         g = self._objects[object.OBJECT_TYPE]
         g.remove(object)
         self._all_objects.remove(object)
@@ -76,22 +73,15 @@ class World():
     def get_main_dic(self):
         return self._objects
 
-    def append_child(self, parent, child):
-        if parent is not None:
-            child.parents.append(parent)
-        self.append(child)
-
     def clear(self):
         # if 2 objects are referencing each other
         # they will never be removed
         # we gotta check that one by one
         for obj in self._all_objects:
-            for parent in obj.parents:
-                parent.on_remove_child(obj)
-            obj.parents.clear()
+            obj.on_removed_event.clear()
+
+        self._objects.clear()
         self._all_objects.clear()
-        for value in self._objects.values():
-            value.clear()
 
 
 class Controls:
@@ -240,6 +230,7 @@ class EnemySpwaner:
                                     gameobjects.Enemy,
                                     gameobjects.EnemyDiver])
         enemy_group.move((0, 0))
+        enemy_group.on_removed_event.append(self.on_child_removed)
 
         move = gameobjects.MovmentClassic()
         move.speed_x *= (1 + (self._difficulty * 0.2))
@@ -256,7 +247,7 @@ class EnemySpwaner:
         rand_diver.min_timeout = 5
         self._world.append(rand_diver)
 
-        self._world.append_child(self, enemy_group)
+        self._world.append(enemy_group)
         self._world.append(move)
         self._world.append(rand_shooter)
 
@@ -266,14 +257,15 @@ class EnemySpwaner:
     def spawn_single(self):
         enemy = gameobjects.EnemyDiver()
         enemy.set_pos((300, 300))
+        enemy.on_removed_event.append(self.on_child_removed)
 
-        self._world.append_child(self, enemy)
+        self._world.append(enemy)
         self.singles.append(enemy)
         shooter = gameobjects.ShooterPeriodic()
         shooter.set_child(enemy)
         self._world.append(shooter)
 
-    def on_remove_child(self, child):
+    def on_child_removed(self, child):
         if child is self.wave:
             self.spawn_wave()
         else:
@@ -281,9 +273,9 @@ class EnemySpwaner:
 
     def reset(self):
         self._difficulty = 0
-        self.wave.parents.clear()  # I don't want world to notify me
+        self.wave.on_removed_event.clear()  # I don't want world to notify me
         for enemy in self.singles:
-            enemy.parents.clear()
+            enemy.on_removed_event.clear()
 
     def update(self, delta_time):
         if self.wave.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
@@ -465,5 +457,6 @@ class Components():
         self.animator.clear()
         self.player.__init__()
         self.world.append(self.player)
+        self.collisions.__init__(self.world, self.game_state)
         self.gui.loser(False)
         self.spawner.__init__(self.world, self.game_state)
