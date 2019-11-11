@@ -598,7 +598,7 @@ class MovementPath(Movement):
         result = self.clamp()
         self.child.set_pos(self.get_current())
         if result:
-            self.world_remove_object(self)
+            WorldHelper.remove(self)
 
     def get_total_time(self):
         return self._time
@@ -674,6 +674,7 @@ class MovementAccelDown(Parent):
 
 
 class MovmentClassic(Parent):
+    OBJECT_TYPE = 'movement'
     SPEED_X = 100
     STEP_Y = 60
     PADDING_X = 30

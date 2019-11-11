@@ -10,6 +10,7 @@ from pygame.locals import (
 import datetime
 import random
 import Randomizer
+from levels import Waves
 
 
 class Input():
@@ -213,72 +214,54 @@ class EnemySpwaner:
     LOWER_LIMIT = 300
 
     def __init__(self, world, game_state):
-        self._difficulty = 0
         self._world = world
         self._player = self._world.get_by_type(gameobjects.Player)[0]
         self._game_state = game_state
 
         self.wave = None
         self.singles = []
+        self.wave_index = 1
         self.spawn_wave()
-        self.spawn_single()
 
     def spawn_wave(self):
-        enemy_group = gameobjects.EnemyRect()
-        enemy_group.mixed_rows(10, [gameobjects.Enemy,
-                                    gameobjects.Enemy,
-                                    gameobjects.Enemy,
-                                    gameobjects.EnemyDiver])
-        enemy_group.move((0, 0))
-        enemy_group.on_removed_event.append(self.on_child_removed)
+        group, singles = Waves.create_wave(self.wave_index, self._player)
 
-        move = gameobjects.MovmentClassic()
-        move.speed_x *= (1 + (self._difficulty * 0.2))
-        move.set_child(enemy_group)
+        if group is not None:
+            self._world.append(group.enemy)
+            self._world.append(group.mover)
+            self._world.append(group.shooter)
+            self._group = group.enemy
+            group.enemy.on_removed_event.append(self.on_child_removed)
 
-        rand_shooter = gameobjects.ShooterGroup()
-        rand_shooter.set_child(enemy_group)
-        # rand_shooter.max_enemies_shooting += self._difficulty * 4
-        rand_shooter.max_timeout -= self._difficulty * 0.2
+        if len(singles) > 0:
+            for etemp in singles:
+                self._world.append(etemp.enemy)
+                self._world.append(etemp.mover)
+                self._world.append(etemp.shooter)
+                self.singles.append(etemp.enemy)
+                etemp.enemy.on_removed_event.append(self.on_child_removed)
 
-        rand_diver = gameobjects.ShooterGroupDiver()
-        rand_diver.set_child(enemy_group)
-        rand_diver.max_timeout = 10
-        rand_diver.min_timeout = 5
-        self._world.append(rand_diver)
-
-        self._world.append(enemy_group)
-        self._world.append(move)
-        self._world.append(rand_shooter)
-
-        self._difficulty += 1
-        self.wave = enemy_group
-
-    def spawn_single(self):
-        enemy = gameobjects.EnemyDiver()
-        enemy.set_pos((300, 300))
-        enemy.on_removed_event.append(self.on_child_removed)
-
-        self._world.append(enemy)
-        self.singles.append(enemy)
-        shooter = gameobjects.ShooterPeriodic()
-        shooter.set_child(enemy)
-        self._world.append(shooter)
+        self.wave_index += 1
 
     def on_child_removed(self, child):
-        if child is self.wave:
-            self.spawn_wave()
+        if child is self._group:
+            self._group = None
         else:
             self.singles.remove(child)
+        if self._group is None and len(self.singles) == 0:
+            self.spawn_wave()
+            print('spawning')
 
     def reset(self):
-        self._difficulty = 0
-        self.wave.on_removed_event.clear()  # I don't want world to notify me
+        self.wave_index = 1
+        if self._group is not None:
+            # I don't want world to notify me
+            self._group.on_removed_event.clear()
         for enemy in self.singles:
             enemy.on_removed_event.clear()
 
     def update(self, delta_time):
-        if self.wave.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
+        if self._group.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
             self._game_state.on_lost()
 
 
@@ -358,7 +341,7 @@ class Updater:
         return True
 
     def update_world(self, delta_time):
-        self.game.spawner.update(delta_time)
+        # self.game.spawner.update(delta_time)
 
         for gobj in self.game.world.get_all_objects():
             gobj.update(delta_time)
