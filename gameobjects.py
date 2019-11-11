@@ -748,12 +748,12 @@ class ShooterPeriodicVary(ShooterPeriodic):
         self.reset_clock()
 
     def reset_clock(self):
-        tmin = self.min_timeout * 1000
-        tmax = self.max_timeout * 1000
+        tmin = int(self.min_timeout * 1000)
+        tmax = int(self.max_timeout * 1000)
         val = tmin
         for i in range(0, self.variance):
             val = max(val, random.randint(tmin, tmax))
-        self.set_interval(val / 1000)
+        self.set_interval(val / 1000.0)
 
 
 class ShooterGroup(ShooterPeriodicVary):
