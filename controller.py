@@ -16,13 +16,21 @@ from levels import Waves
 class Input():
     def __init__(self):
         self._events = {}
+        self._events_pressed = {}
 
     def register(self, key_code, command):
+        '''Called when key changes state'''
         self._events[key_code] = command
+
+    def register_pressed(self, key_code, command):
+        '''Called when key is pressed only'''
+        self._events_pressed[key_code] = command
 
     def on_key(self, key_code, down=True):
         if key_code in self._events:
             self._events[key_code](down)
+        elif key_code in self._events_pressed and down:
+            self._events_pressed[key_code]()
 
 
 class World():
@@ -85,55 +93,53 @@ class World():
         self._all_objects.clear()
 
 
-class Controls:
-    DEBUG1 = ord('a')
-    DEBUG2 = ord('z')
-    PAUSE = ord('p')
-    RESET = ord('r')
-    LOSE = ord('l')
+class Controller:
+    DEBUG1 = 'a'
+    DEBUG2 = 'z'
+    PAUSE = 'p'
+    RESET = 'r'
+    LOSE = 'l'
 
-    def __init__(self, player, game_state):
+    def __init__(self, game):
+        self._player = game.world.get_by_type(gameobjects.Player)[0]
+
         self.keyboard = Input()
-        self.keyboard.register(Controls.DEBUG1, self.debug1)
-        self.keyboard.register(Controls.DEBUG2, self.debug2)
-        self.keyboard.register(Controls.PAUSE, self._pause_event)
-        self.keyboard.register(Controls.RESET, self._reset_event)
-        self.keyboard.register(Controls.LOSE, self._lose_event)
-
+        self.register_key(self.DEBUG1, self.debug1)
+        self.register_key(self.DEBUG2, self.debug2)
+        self.register_key(self.PAUSE, self._pause_event)
+        self.register_key(self.RESET, self._reset_event)
+        self.register_key(self.LOSE, self._lose_event)
         self.mouse = Input()
-        self.mouse.register(1, self.shoot)
+        self.mouse.register_pressed(1, self.shoot)
 
-        self._player = player
+        self.key_press_events = []
 
-        self._game_state = game_state
+        self._game_state = game.game_state
 
-    def debug1(self, down):
-        if down:
-            self._player.upgrade_shoot()
+    def register_key(self, char, event):
+        self.keyboard.register_pressed(ord(char), event)
 
-    def debug2(self, down):
-        if down:
-            self._player.downgrade_shoot()
+    def debug1(self):
+        self._player.upgrade_shoot()
 
-    def shoot(self, down):
-        if down:
-            self._player.shoot()
+    def debug2(self):
+        self._player.downgrade_shoot()
+
+    def shoot(self):
+        self._player.shoot()
 
     def update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
         self._player.set_pos(mouse_pos)
 
-    def _pause_event(self, down):
-        if self.on_pause is not None and down:
-            self._game_state.on_pause()
+    def _pause_event(self):
+        self._game_state.on_pause()
 
-    def _reset_event(self, down):
-        if down:
-            self._game_state.on_reset()
+    def _reset_event(self):
+        self._game_state.on_reset()
 
-    def _lose_event(self, down):
-        if down:
-            self._game_state.on_lost()
+    def _lose_event(self):
+        self._game_state.on_lost()
 
 
 def create_explosion(world, pos):
@@ -326,16 +332,16 @@ class Updater:
         self._lastdt = datetime.datetime.now()
         self.clock = pygame.time.Clock()
 
-    def pygame_events(self):
+    def pygame_events(self, controller):
         for event in pygame.event.get():
             if event.type == QUIT:
                 return False
             elif event.type == MOUSEBUTTONDOWN:
-                self.game.controls.mouse.on_key(event.button, True)
+                controller.mouse.on_key(event.button, True)
             elif event.type == MOUSEBUTTONUP:
-                self.game.controls.mouse.on_key(event.button, False)
+                controller.mouse.on_key(event.button, False)
             elif event.type == KEYUP or event.type == KEYDOWN:
-                self.game.controls.keyboard.on_key(
+                controller.keyboard.on_key(
                     event.key, event.type == KEYDOWN)
 
         return True
@@ -354,7 +360,6 @@ class Updater:
         self._lastdt = tnow
 
         if not paused:
-            self.game.controls.update_player_pos()
             self.update_world(dt)
 
         self.game.gui.update()
@@ -421,9 +426,6 @@ class Components():
         self.world.append(self.player)
 
         self.gui = GUI(self.player)
-
-        self.controls = Controls(self.player, game_state)
-        self.controls.on_pause = game_state.on_pause
 
         self.spawner = EnemySpwaner(self.world, game_state)
 

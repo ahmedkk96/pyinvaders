@@ -98,11 +98,14 @@ game = controller.Components(game_state)
 updater = controller.Updater(game)
 render = controller.Render(game, display)
 
+cont = controller.Controller(game)
+
 while True:
-    if not updater.pygame_events():
+    if not updater.pygame_events(cont):
         break
 
     dt = updater.update_all(paused)
+    cont.update_player_pos()
 
     if dead or not paused:
         render.draw(dt)
