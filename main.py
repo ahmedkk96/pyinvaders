@@ -7,7 +7,7 @@ from TextDebugger import Renderer as Debugger
 
 RES_X = 1280
 RES_Y = 720
-controller.EnemySpwaner.LOWER_LIMIT = RES_Y
+# controller.EnemySpwaner.LOWER_LIMIT = RES_Y
 
 paused = False
 dead = False
@@ -60,13 +60,14 @@ def on_reset():
 
 
 def debug(dt):
-    global display, game, debugger
+    global display, game, debugger, updater
     debugger.clear()
 
     fps = int(1 / dt)
     mouse_x, mouse_y = pygame.mouse.get_pos()
 
     # Add text here
+    debugger.add('time_scale: {}'.format(updater.time_scale))
     debugger.add(str(fps))
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
@@ -98,7 +99,7 @@ game = controller.Components(game_state)
 updater = controller.Updater(game)
 render = controller.Render(game, display)
 
-cont = controller.Controller(game)
+cont = controller.Controller(game, updater)
 
 while True:
     if not updater.pygame_events(cont):

@@ -97,12 +97,15 @@ class Controller:
     DEBUG1 = 'a'
     DEBUG2 = 'z'
     DEBUG3 = 'k'
+    DEBUG4 = ']'
+    DEBUG5 = '['
     PAUSE = 'p'
     RESET = 'r'
     LOSE = 'l'
 
-    def __init__(self, game):
+    def __init__(self, game, updater):
         self._player = game.world.get_by_type(gameobjects.Player)[0]
+        self._updater = updater
 
         self.keyboard = Input()
         self.register_key(self.DEBUG1, self._player.upgrade_shoot)
@@ -111,6 +114,8 @@ class Controller:
         self.register_key(self.RESET, game.game_state.on_reset)
         self.register_key(self.LOSE, game.game_state.on_lost)
         self.register_key(self.DEBUG3, game.spawner.kill_wave)
+        self.register_key(self.DEBUG4, self.inc_sim_speed)
+        self.register_key(self.DEBUG5, self.dec_sim_speed)
         self.mouse = Input()
         self.mouse.register_pressed(1, self._player.shoot)
 
@@ -124,6 +129,12 @@ class Controller:
     def update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
         self._player.set_pos(mouse_pos)
+
+    def inc_sim_speed(self):
+        self._updater.time_scale += 1
+
+    def dec_sim_speed(self):
+        self._updater.time_scale -= 1
 
 
 def create_explosion(world, pos):
@@ -201,7 +212,7 @@ class Collisions:
 
 
 class EnemySpwaner:
-    LOWER_LIMIT = 300
+    LOWER_LIMIT = 720
 
     def __init__(self, world, game_state):
         self._world = world
@@ -328,6 +339,7 @@ class Updater:
         self.game = game
         self._lastdt = datetime.datetime.now()
         self.clock = pygame.time.Clock()
+        self.time_scale = 1
 
     def pygame_events(self, controller):
         for event in pygame.event.get():
@@ -344,8 +356,6 @@ class Updater:
         return True
 
     def update_world(self, delta_time):
-        # self.game.spawner.update(delta_time)
-
         for gobj in self.game.world.get_all_objects():
             gobj.update(delta_time)
 
@@ -357,7 +367,7 @@ class Updater:
         self._lastdt = tnow
 
         if not paused:
-            self.update_world(dt)
+            self.update_world(dt * self.time_scale)
 
         self.game.gui.update()
         pygame.display.update()
