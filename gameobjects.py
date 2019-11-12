@@ -682,6 +682,7 @@ class MovmentClassic(Parent):
     SPEED_X = 100
     STEP_Y = 60
     PADDING_X = 30
+    LOWER_LIMIT = 720
 
     def __init__(self):
         super(MovmentClassic, self).__init__()
@@ -689,12 +690,15 @@ class MovmentClassic(Parent):
         self.step_y = MovmentClassic.STEP_Y
         self.dir = True
         self._residual = 0
+        self.on_under_screen = None
+        self.lower_limit = self.LOWER_LIMIT
 
     def set_child(self, child):
         super(MovmentClassic, self).set_child(child)
         self._rect = child.get_rect()
         self._left = self._rect.left
         self._right = self._rect.right
+        self._bottom = self._rect.bottom
 
     def update(self, delta_time):
         offset_x = delta_time * self.speed_x
@@ -706,17 +710,25 @@ class MovmentClassic(Parent):
         if self._right + offset_x > sc.width:
             offset_x = sc.width - self._right
             offset_y = self.step_y
+            self.check_under_screen(offset_y)
             self.dir = False
 
         if self._left + offset_x < 0:
             offset_x = -self._left
             offset_y = self.step_y
+            self.check_under_screen(offset_y)
             self.dir = True
 
         self._right += offset_x
         self._left += offset_x
 
         self.child.move(Vector2(offset_x, offset_y))
+
+    def check_under_screen(self, offset_y):
+        self._bottom += offset_y
+        if self._bottom > self.lower_limit and\
+           self.on_under_screen is not None:
+            self.on_under_screen()
 
 
 class ShooterPeriodic(Parent):

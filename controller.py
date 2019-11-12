@@ -221,6 +221,8 @@ class EnemySpwaner:
             self._world.append(group.mover)
             self._world.append(group.shooter)
             self._group = group.enemy
+            group.mover.lower_limit = self.LOWER_LIMIT
+            group.mover.on_under_screen = self._game_state.on_lost
             group.enemy.on_removed_event.append(self.on_child_removed)
 
         if len(singles) > 0:
@@ -249,10 +251,6 @@ class EnemySpwaner:
             self._group.on_removed_event.clear()
         for enemy in self.singles:
             enemy.on_removed_event.clear()
-
-    def update(self, delta_time):
-        if self._group.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
-            self._game_state.on_lost()
 
     def kill_wave(self):
         # We don't want to spawn enemies while removing them
