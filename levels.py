@@ -37,8 +37,6 @@ class Waves:
         enemy_group_temp = None
         enemy_singles = []
 
-        enemy_singles = []
-
         if wave_number == 1:
             egt = Waves._create_classic_group()
             egt.enemy.uniform_rectangle(7, 3, gameobjects.Enemy)
@@ -52,19 +50,20 @@ class Waves:
             egt.setup()
             enemy_group_temp = egt
         elif wave_number == 3:
+            eg = gameobjects.EnemyGroup()
             for x in range(0, 4):
                 enemy = gameobjects.EnemyTargtedBullet(player)
-                pos = (200 + x * 200, 300)
+                pos = (200 + x * 200, 100)
                 enemy.set_pos(pos)
-                move = gameobjects.MovementLinear(1, pos,
-                                                  (pos[0]+200, pos[1]))
-                move.set_child(enemy)
-                move.loop = True
-                shoot = gameobjects.ShooterPeriodic()
-                shoot.set_interval(2)
-                shoot.set_child(enemy)
-                enemy_singles.append(EnemyTemplate(enemy,
-                                                   move,
-                                                   shoot))
+                eg.append(enemy)
+
+            pos = eg.get_pos()
+            move = gameobjects.MovementLinear(1, (pos.x, pos.y),
+                                            (pos.x+200, pos.y))
+            move.loop = True
+            shoot = gameobjects.ShooterPeriodic()
+            shoot.set_interval(0.5)
+            enemy_group_temp = EnemyTemplate(eg, move, shoot)
+            enemy_group_temp.setup()
 
         return (enemy_group_temp, enemy_singles)
