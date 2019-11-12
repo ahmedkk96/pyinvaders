@@ -219,7 +219,6 @@ class Player(HealthGameObject):
 
     def __init__(self, *args, **kw):
         super(Player, self).__init__(*args, **kw)
-        self.shoot = self._shoot_0
         self._shooting_modes = [self._shoot_0,
                                 self._shoot_1,
                                 self._shoot_2,
@@ -254,27 +253,24 @@ class Player(HealthGameObject):
         self._create_bullet(25, 0, Bullet2)
         self._create_bullet(-25, 0, Bullet2)
 
+    def shoot(self):
+        self._shooting_modes[self._shooting_mode]()
+
     def _create_bullet(self, offset_x, offset_y, type):
         b = type()
         b.set_pos(self._pos + Vector2(offset_x, offset_y))
         WorldHelper.append(b)
 
-    def _set_shoot_mode(self):
-        self.shoot = self._shooting_modes[self._shooting_mode]
-
     def upgrade_shoot(self):
         if self._shooting_mode < len(self._shooting_modes) - 1:
             self._shooting_mode += 1
-            self._set_shoot_mode()
 
     def remove_shoot_upgrades(self):
         self._shooting_mode = 0
-        self._set_shoot_mode()
 
     def downgrade_shoot(self):
         if self._shooting_mode > 0:
             self._shooting_mode -= 1
-            self._set_shoot_mode()
 
     def on_powerup(self, powerup):
         if powerup.PU_TYPE == 'weapon':
@@ -508,6 +504,14 @@ class EnemyGroup(GameObject):
             return self.enemies[type.ENEMY_TYPE]
         else:
             return None
+
+    def clear(self):
+        for enemy in self.all_enemies:
+            enemy.on_removed_event.remove(self.on_child_removed)
+            WorldHelper.remove(enemy)
+
+        self.enemies.clear()
+        self.all_enemies.clear()
 
 
 class EnemyRect(EnemyGroup):

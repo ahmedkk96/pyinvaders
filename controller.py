@@ -96,6 +96,7 @@ class World():
 class Controller:
     DEBUG1 = 'a'
     DEBUG2 = 'z'
+    DEBUG3 = 'k'
     PAUSE = 'p'
     RESET = 'r'
     LOSE = 'l'
@@ -104,13 +105,14 @@ class Controller:
         self._player = game.world.get_by_type(gameobjects.Player)[0]
 
         self.keyboard = Input()
-        self.register_key(self.DEBUG1, self.debug1)
-        self.register_key(self.DEBUG2, self.debug2)
-        self.register_key(self.PAUSE, self._pause_event)
-        self.register_key(self.RESET, self._reset_event)
-        self.register_key(self.LOSE, self._lose_event)
+        self.register_key(self.DEBUG1, self._player.upgrade_shoot)
+        self.register_key(self.DEBUG2, self._player.downgrade_shoot)
+        self.register_key(self.PAUSE, game.game_state.on_pause)
+        self.register_key(self.RESET, game.game_state.on_reset)
+        self.register_key(self.LOSE, game.game_state.on_lost)
+        self.register_key(self.DEBUG3, game.spawner.kill_wave)
         self.mouse = Input()
-        self.mouse.register_pressed(1, self.shoot)
+        self.mouse.register_pressed(1, self._player.shoot)
 
         self.key_press_events = []
 
@@ -119,27 +121,9 @@ class Controller:
     def register_key(self, char, event):
         self.keyboard.register_pressed(ord(char), event)
 
-    def debug1(self):
-        self._player.upgrade_shoot()
-
-    def debug2(self):
-        self._player.downgrade_shoot()
-
-    def shoot(self):
-        self._player.shoot()
-
     def update_player_pos(self):
         mouse_pos = pygame.mouse.get_pos()
         self._player.set_pos(mouse_pos)
-
-    def _pause_event(self):
-        self._game_state.on_pause()
-
-    def _reset_event(self):
-        self._game_state.on_reset()
-
-    def _lose_event(self):
-        self._game_state.on_lost()
 
 
 def create_explosion(world, pos):
@@ -269,6 +253,21 @@ class EnemySpwaner:
     def update(self, delta_time):
         if self._group.get_rect().bottom > EnemySpwaner.LOWER_LIMIT:
             self._game_state.on_lost()
+
+    def kill_wave(self):
+        # We don't want to spawn enemies while removing them
+        # Also not removing them from the list while iterating on them
+        # Remove on_child_event from them first!
+        if self._group is not None:
+            self._group.clear()
+            self._group.on_removed_event.remove(self.on_child_removed)
+            self._world.remove(self._group)
+            self._group = None
+        for enemy in self.singles:
+            enemy.on_removed_event.remove(self.on_child_removed)
+            self._world.remove(enemy)
+        self.singles.clear()
+        self.spawn_wave()
 
 
 class Animator():
