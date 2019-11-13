@@ -477,10 +477,10 @@ class EnemyGroup(GameObject):
         enemy.shoot()
 
     def on_child_removed(self, child):
-        if len(self.all_enemies) == 1:
-            WorldHelper.remove(self)
         self.enemies[child.ENEMY_TYPE].remove(child)
         self.all_enemies.remove(child)
+        if len(self.all_enemies) == 0:
+            WorldHelper.remove(self)
 
     def update(self, delta_time):
         pass
@@ -514,6 +514,10 @@ class EnemyGroup(GameObject):
         self.enemies.clear()
         self.all_enemies.clear()
 
+    def on_world_remove(self):
+        super(EnemyGroup, self).on_world_remove()
+        self.clear()
+
 
 class EnemyRect(EnemyGroup):
     def _create_enemy(self, type, offset):
@@ -525,21 +529,21 @@ class EnemyRect(EnemyGroup):
         self.append(e)
 
     def uniform_rectangle(self, width, height, type,
-                          padding_x=70, padding_y=60):
+                          padding_x=100, padding_y=60):
         for y in range(0, height):
             for x in range(0, width):
                 self._create_enemy(type,
                                    (x*padding_x, y*padding_y))
 
     def mixed_rows(self, width, types,
-                   padding_x=70, padding_y=60):
+                   padding_x=100, padding_y=60):
         for y in range(0, len(types)):
             for x in range(0, width):
                 self._create_enemy(types[y],
                                    (x*padding_x, y*padding_y))
 
     def random_rectangle(self, width, height, weighted,
-                         padding_x=70, padding_y=60):
+                         padding_x=100, padding_y=60):
         count = height
         for y in range(0, count):
             for x in range(0, width):
@@ -552,7 +556,14 @@ class Parent(GameObject):
     This class is a parent for one object,
     removes itself when child is removed from world
     '''
+
+    def __init__(self):
+        super(Parent, self).__init__()
+        self.child = None
+
     def set_child(self, child):
+        if self.child is not None:
+            self.child.on_removed_event.remove(self.on_child_removed)
         self.child = child
         self.child.on_removed_event.append(self.on_child_removed)
 
