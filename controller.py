@@ -219,64 +219,48 @@ class EnemySpwaner:
         self._player = self._world.get_by_type(gameobjects.Player)[0]
         self._game_state = game_state
 
-        self.wave = None
-        self.singles = []
+        self.enemies = []
         self.wave_index = 1
         self.spawn_wave()
 
     def spawn_wave(self):
-        group, singles = Waves.create_wave(self.wave_index, self._player)
+        enemies = Waves.create_wave(self.wave_index, self._player)
 
-        if group is not None:
-            self._world.append(group.enemy)
-            self._world.append(group.mover)
-            self._world.append(group.shooter)
-            self._group = group.enemy
-            group.mover.lower_limit = self.LOWER_LIMIT
-            group.mover.on_under_screen = self._game_state.on_lost
-            group.enemy.on_removed_event.append(self.on_child_removed)
-
-        if len(singles) > 0:
-            for etemp in singles:
-                self._world.append(etemp.enemy)
-                self._world.append(etemp.mover)
-                self._world.append(etemp.shooter)
-                self.singles.append(etemp.enemy)
-                etemp.enemy.on_removed_event.append(self.on_child_removed)
+        if len(enemies) > 0:
+            for etemp in enemies:
+                self._add_enemy_temp(etemp)
 
         self.wave_index += 1
 
     def on_child_removed(self, child):
-        if child is self._group:
-            self._group = None
-        else:
-            self.singles.remove(child)
-        if self._group is None and len(self.singles) == 0:
+        self.enemies.remove(child)
+        if len(self.enemies) == 0:
             self.spawn_wave()
-            print('spawning')
 
     def reset(self):
         self.wave_index = 1
-        if self._group is not None:
             # I don't want world to notify me
-            self._group.on_removed_event.clear()
-        for enemy in self.singles:
+        for enemy in self.enemies:
             enemy.on_removed_event.clear()
 
     def kill_wave(self):
         # We don't want to spawn enemies while removing them
         # Also not removing them from the list while iterating on them
         # Remove on_child_event from them first!
-        if self._group is not None:
-            self._group.clear()
-            self._group.on_removed_event.remove(self.on_child_removed)
-            self._world.remove(self._group)
-            self._group = None
-        for enemy in self.singles:
+        for enemy in self.enemies:
             enemy.on_removed_event.remove(self.on_child_removed)
             self._world.remove(enemy)
-        self.singles.clear()
+        self.enemies.clear()
         self.spawn_wave()
+
+    def _add_enemy_temp(self, etemp):
+        self._world.append(etemp.enemy)
+        if etemp.mover is not None:
+            self._world.append(etemp.mover)
+        if etemp.shooter is not None:
+            self._world.append(etemp.shooter)
+        self.enemies.append(etemp.enemy)
+        etemp.enemy.on_removed_event.append(self.on_child_removed)
 
 
 class Animator():
