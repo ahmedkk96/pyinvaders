@@ -8,8 +8,10 @@ class EnemyTemplate:
         self.enemy = enemy
 
     def setup(self):
-        self.shooter.set_child(self.enemy)
-        self.mover.set_child(self.enemy)
+        if self.shooter is not None:
+            self.shooter.set_child(self.enemy)
+        if self.mover is not None:
+            self.mover.set_child(self.enemy)
 
 
 class Waves:
@@ -25,6 +27,54 @@ class Waves:
                                  mover,
                                  shooter)
 
+    def wave_1(player):
+        egt = Waves._create_classic_group()
+        egt.enemy.set_pos((200, 100))
+        egt.enemy.uniform_rectangle(7, 3, gameobjects.Enemy)
+        egt.setup()
+        return [egt]
+
+    def wave_2(player):
+        egt = Waves._create_classic_group()
+        egt.enemy.mixed_rows(7, [gameobjects.Enemy] * 3 +
+                                [gameobjects.Enemy2])
+        egt.mover.speed_x *= 1.4
+        egt.setup()
+        return [egt]
+
+    def wave_3(player):
+        eg = gameobjects.EnemyGroup()
+        for x in range(0, 4):
+            enemy = gameobjects.EnemyTargtedBullet(player)
+            pos = (200 + x * 200, 100)
+            enemy.set_pos(pos)
+            eg.append(enemy)
+
+        pos = eg.get_pos()
+        move = gameobjects.MovementLinear(1, (pos.x, pos.y),
+                                          (pos.x+200, pos.y))
+        move.loop = True
+        shoot = gameobjects.ShooterPeriodic()
+        shoot.set_interval(0.5)
+        egt = EnemyTemplate(eg, move, shoot)
+        egt.setup()
+        return [egt]
+
+    def wave_4(player):
+        es = Waves.wave_3(player)
+        eg = Waves.wave_2(player)
+        pos = eg[0].enemy.get_pos()
+        pos.y += 150
+        eg[0].enemy.set_pos(pos)
+        eg[0].mover.set_child(eg[0].enemy)
+        eg[0].mover.speed_x = 150
+        eg[0].mover.step_y = 0
+
+        es[0].enemy.on_removed_event.remove(es[0].mover.on_child_removed)
+        es[0].mover = None
+
+        return eg + es
+
     def create_wave(wave_number, player):
         """
         Creates wave based on predefined waves,
@@ -33,37 +83,7 @@ class Waves:
 
         :returns: tuple (wave, singles)
         """
+        wave_list = [Waves.wave_1, Waves.wave_2,
+                     Waves.wave_3, Waves.wave_4]
 
-        enemy_group_temp = None
-        enemy_singles = []
-
-        if wave_number == 1:
-            egt = Waves._create_classic_group()
-            egt.enemy.uniform_rectangle(7, 3, gameobjects.Enemy)
-            egt.setup()
-            enemy_group_temp = egt
-        elif wave_number == 2:
-            egt = Waves._create_classic_group()
-            egt.enemy.mixed_rows(7,
-                                 [gameobjects.Enemy] * 3 +
-                                 [gameobjects.Enemy2])
-            egt.setup()
-            enemy_group_temp = egt
-        elif wave_number == 3:
-            eg = gameobjects.EnemyGroup()
-            for x in range(0, 4):
-                enemy = gameobjects.EnemyTargtedBullet(player)
-                pos = (200 + x * 200, 100)
-                enemy.set_pos(pos)
-                eg.append(enemy)
-
-            pos = eg.get_pos()
-            move = gameobjects.MovementLinear(1, (pos.x, pos.y),
-                                            (pos.x+200, pos.y))
-            move.loop = True
-            shoot = gameobjects.ShooterPeriodic()
-            shoot.set_interval(0.5)
-            enemy_group_temp = EnemyTemplate(eg, move, shoot)
-            enemy_group_temp.setup()
-
-        return (enemy_group_temp, enemy_singles)
+        return wave_list[wave_number-1](player)
