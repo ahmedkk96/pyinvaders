@@ -61,6 +61,12 @@ class Waves:
         return [egt]
 
     def wave_4(player):
+        eg, es = Waves.wave_5(player)
+        es.enemy.on_removed_event.remove(es.mover.on_child_removed)
+        es.mover = None
+        return [eg, es]
+
+    def wave_5(player):
         es = Waves.wave_3(player)
         eg = Waves.wave_2(player)
         pos = eg[0].enemy.get_pos()
@@ -69,9 +75,6 @@ class Waves:
         eg[0].mover.set_child(eg[0].enemy)
         eg[0].mover.speed_x = 150
         eg[0].mover.step_y = 0
-
-        es[0].enemy.on_removed_event.remove(es[0].mover.on_child_removed)
-        es[0].mover = None
 
         return eg + es
 
@@ -84,6 +87,7 @@ class Waves:
         :returns: tuple (wave, singles)
         """
         wave_list = [Waves.wave_1, Waves.wave_2,
-                     Waves.wave_3, Waves.wave_4]
+                     Waves.wave_3, Waves.wave_4,
+                     Waves.wave_5]
 
         return wave_list[wave_number-1](player)
