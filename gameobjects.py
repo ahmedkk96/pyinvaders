@@ -828,6 +828,33 @@ class MeteorBig(Meteor):
     SPRITE_NAME = 'meteor_big'
 
 
+class MeteorGenerator(ShooterPeriodic):
+    OBJECT_TYPE = 'meteor_spawner'
+    INTERVAL = 1
+    UPPER_LIMIT = -300
+    LOWER_LIMIT = 500
+
+    def __init__(self, life_time):
+        super(MeteorGenerator, self).__init__()
+        self.speed = Meteor.SPEED
+        self.life_time = life_time
+
+    def update(self, dt):
+        super(MeteorGenerator, self).update(dt)
+        self.life_time -= dt
+        if self.life_time <= 0:
+            WorldHelper.remove(self)
+
+    def spawn(self):
+        meteor = MeteorBig()
+        meteor.set_pos((-100, random.randint(self.UPPER_LIMIT,
+                                             self.LOWER_LIMIT)))
+        WorldHelper.append(meteor)
+
+    def shoot(self):
+        self.spawn()
+
+
 class ProgressBar:
     WIDTH = 400
     HEIGHT = 20

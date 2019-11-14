@@ -78,6 +78,10 @@ class Waves:
 
         return eg + es
 
+    def wave_6(player):
+        meteorgen = gameobjects.MeteorGenerator(60)
+        return [EnemyTemplate(meteorgen, None, None)]
+
     def create_wave(wave_number, player):
         """
         Creates wave based on predefined waves,
@@ -88,6 +92,6 @@ class Waves:
         """
         wave_list = [Waves.wave_1, Waves.wave_2,
                      Waves.wave_3, Waves.wave_4,
-                     Waves.wave_5]
+                     Waves.wave_5, Waves.wave_6]
 
         return wave_list[wave_number-1](player)

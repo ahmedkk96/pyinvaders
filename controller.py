@@ -140,9 +140,10 @@ class Controller:
         self._updater.time_scale -= 1
 
     def test(self):
-        meteor = gameobjects.MeteorBig()
-        meteor.set_pos((-100, random.randint(-300, 500)))
-        self._game.world.append(meteor)
+        mg = gameobjects.MeteorGenerator(10)
+        mg.interval = 0.5
+        mg.life_time = 20
+        self._game.world.append(mg)
 
 
 def create_explosion(world, pos):

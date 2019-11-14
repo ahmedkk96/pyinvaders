@@ -11,6 +11,7 @@ RES_Y = 720
 
 paused = False
 dead = False
+total_dt = 0
 
 
 class GameEvents:
@@ -68,6 +69,7 @@ def debug(dt):
 
     # Add text here
     debugger.add('time_scale: {}'.format(updater.time_scale))
+    debugger.add('total_dt: {:.2f}'.format(total_dt, 2))
     debugger.add(str(fps))
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
@@ -107,6 +109,7 @@ while True:
 
     dt = updater.update_all(paused)
     cont.update_player_pos()
+    total_dt += dt
 
     if dead or not paused:
         render.draw(dt)
