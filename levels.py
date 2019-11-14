@@ -38,7 +38,7 @@ class Waves:
         egt = Waves._create_classic_group()
         egt.enemy.mixed_rows(7, [gameobjects.Enemy] * 3 +
                                 [gameobjects.Enemy2])
-        egt.mover.speed_x *= 1.4
+        # egt.mover.speed_x *= 1.4
         egt.setup()
         return [egt]
 

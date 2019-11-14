@@ -153,7 +153,7 @@ def create_explosion(world, pos):
 
 
 def drop_powerup(world, pos):
-    if Randomizer.Bool(0.05):
+    if Randomizer.Bool(0.07):
         rand_type = random.randint(0, 2)
         type = [gameobjects.PowerupHealth,
                 gameobjects.PowerupWeapon,

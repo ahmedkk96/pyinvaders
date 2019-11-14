@@ -233,7 +233,7 @@ class Player(HealthGameObject):
     def take_damage(self, damage):
         if self._shield is not None:
             if self._shield.take_damage(damage):
-                self.world_remove_object(self._shield)
+                WorldHelper.remove(self._shield)
                 self._shield = None
         else:
             return super(Player, self).take_damage(damage)
@@ -337,8 +337,8 @@ class Enemy(HealthGameObject):
     SPRITE_NAME = 'enemy'
     OBJECT_TYPE = 'enemy'
     ENEMY_TYPE = 'simple'
-    SCORE = 10
-    HEALTH = 50
+    HEALTH = 75
+    SCORE = 100
 
     def shoot(self):
         bullet = EBullet()
@@ -348,13 +348,16 @@ class Enemy(HealthGameObject):
 
 class Enemy2(Enemy):
     SPRITE_NAME = 'enemy_blue2'
-    HEALTH = 100
+    HEALTH = 125
+    SCORE = 300
 
 
 class EnemyDiver(Enemy):
     DIVE_SPEED = 500
     ACCEL_TIME = 1
     ENEMY_TYPE = 'diver'
+    HEALTH = 100
+    SCORE = 200
 
     def dive(self):
         move = MovementAccelDown(self.ACCEL_TIME, self.DIVE_SPEED)
@@ -364,7 +367,8 @@ class EnemyDiver(Enemy):
 
 class EnemyTargtedBullet(Enemy):
     SPRITE_NAME = 'enemy_red4'
-    HEALTH = 100
+    HEALTH = 150
+    SCORE = 500
     ENEMY_TYPE = 'targeted_bullet'
 
     def __init__(self, player):
@@ -393,7 +397,7 @@ class Explosion(SpriteGameObject):
 
 class DropItem(SpriteGameObject):
     OBJECT_TYPE = 'dropitem'
-    SPEED = 300
+    SPEED = 150
 
     def __init__(self, *args, **kwargs):
         super(DropItem, self).__init__(*args, **kwargs)
