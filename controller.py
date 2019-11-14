@@ -99,11 +99,13 @@ class Controller:
     DEBUG3 = 'k'
     DEBUG4 = ']'
     DEBUG5 = '['
+    DEBUG6 = 'm'
     PAUSE = 'p'
     RESET = 'r'
     LOSE = 'l'
 
     def __init__(self, game, updater):
+        self._game = game
         self._player = game.world.get_by_type(gameobjects.Player)[0]
         self._updater = updater
 
@@ -115,7 +117,8 @@ class Controller:
         self.register_key(self.LOSE, game.game_state.on_lost)
         self.register_key(self.DEBUG3, game.spawner.kill_wave)
         self.register_key(self.DEBUG4, self.inc_sim_speed)
-        self.register_key(self.DEBUG5, self.dec_sim_speed)
+        self.register_key(self.DEBUG5, self.dec_sim_speed)        
+        self.register_key(self.DEBUG6, self.test)
         self.mouse = Input()
         self.mouse.register_pressed(1, self._player.shoot)
 
@@ -135,6 +138,11 @@ class Controller:
 
     def dec_sim_speed(self):
         self._updater.time_scale -= 1
+
+    def test(self):
+        meteor = gameobjects.MeteorBig()
+        meteor.set_pos((-100, random.randint(-300, 500)))
+        self._game.world.append(meteor)
 
 
 def create_explosion(world, pos):
@@ -165,6 +173,7 @@ class Collisions:
         self._enemies = world.get_by_type(gameobjects.Enemy)
         self._e_bullets = world.get_by_type(gameobjects.EBullet)
         self._powerups = world.get_by_type(gameobjects.DropItem)
+        self._meteors = world.get_by_type(gameobjects.Meteor)
         self._game_state = game_state
 
     def check_list(self, obj, list, callback, only_one=True):
@@ -195,6 +204,9 @@ class Collisions:
     def on_player_enemy(self, player, enemy):
         self._game_state.on_lost()
 
+    def on_player_meteor(self, player, meteor):
+        self._game_state.on_lost()
+
     def update(self):
         # Check if enemy is hit
         for bullet in self._bullets:
@@ -209,6 +221,9 @@ class Collisions:
 
         # Check player hitting enemy
         self.check_list(self._player, self._enemies, self.on_player_enemy)
+
+        # Check player hitting meteor
+        self.check_list(self._player, self._meteors, self.on_player_meteor)
 
 
 class EnemySpwaner:

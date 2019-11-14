@@ -804,6 +804,30 @@ class ShooterGroupDiver(ShooterGroup):
             self.remove_self()
 
 
+class Meteor(SpriteGameObject):
+    OBJECT_TYPE = 'meteor'
+    SPEED = 1000
+
+    def __init__(self):
+        super(Meteor, self).__init__()
+        self._inside_screen = False
+        self.speed.x = self.SPEED
+        self.speed.rotate_ip(30)
+
+    def update(self, dt):
+        super(Meteor, self).update(dt)
+        if self.inside_screen(WorldHelper.screen_rect):
+            self._inside_screen = True
+        # Waits until it get's on screen (spawn)
+        # then check if it became out to remove
+        if self._inside_screen:
+            self.remove_outside_screen()
+
+
+class MeteorBig(Meteor):
+    SPRITE_NAME = 'meteor_big'
+
+
 class ProgressBar:
     WIDTH = 400
     HEIGHT = 20
