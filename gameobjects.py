@@ -613,15 +613,25 @@ class MovementPath(Movement):
             else:
                 return True
 
-    def update(self, dt):
+    def seek(self, dt):
         self.t += (dt / self._time) * self._dir
         result = self.clamp()
-        self.child.set_pos(self.get_current())
         if result:
-            WorldHelper.remove(self)
+            self.on_finished()
+        return result
+
+    def on_finished(self):
+        self.remove_self()
+
+    def update(self, dt):
+        self.seek(dt)
+        self.child.set_pos(self.get_current())
 
     def get_total_time(self):
         return self._time
+
+    def set_abs_time(self, time):
+        self.t = time / self._time
 
 
 class MovementLinear(MovementPath):
@@ -691,6 +701,75 @@ class MovementAccelDown(Parent):
             self.cur_vel = self.max_vel
         self.child.speed.y = self.cur_vel
         self.child.remove_outside_screen()
+
+
+class MovementGroupSpawn(MovementPath):
+    STARTING_POS = (-50, 400)
+    DELAY = 0.2
+    ONE_CURVE_TIME = 1
+
+    def __init__(self):
+        super(MovementGroupSpawn, self).__init__(-1)
+        self._after_movement = None
+
+    def set_child(self, child):
+        super(MovementGroupSpawn, self).set_child(child)
+        self.reset()
+
+    def set_movement_after(self, movement):
+        self._after_movement = movement
+
+    def reset(self):
+        '''
+        Moves enemies out of screen and spawn them one by one
+
+        call it after filling enemy group
+        '''
+        self.number = len(self.child.all_enemies)
+        self.index = 0
+        delay_time = (self.number-1) * self.DELAY
+        self._time = delay_time + self.ONE_CURVE_TIME
+
+        index = 0
+        for e in self.child.all_enemies:
+            end_pos = e.get_pos()
+
+            delay = index * self.DELAY
+            index += 1
+
+            bezier = MovementBezier(self.ONE_CURVE_TIME,
+                                    self.STARTING_POS,
+                                    (end_pos[0], self.STARTING_POS[1]),
+                                    end_pos)
+            bezier.delay = delay
+
+            e.group_curve = bezier
+            e.set_pos(self.STARTING_POS)
+
+    def update(self, dt):
+        self.seek(dt)
+        for e in self.child.all_enemies:
+            bezier = e.group_curve
+            delay = bezier.delay
+            end_time = delay + bezier.get_total_time()
+
+            abs_time = self.t * self._time
+            t = 0
+            if abs_time > end_time:
+                t = bezier.get_total_time()
+            elif abs_time < delay:
+                t = 0
+            else:
+                t = abs_time - delay
+
+            bezier.set_abs_time(t)
+            e.set_pos(bezier.get_current())
+
+    def on_finished(self):
+        super(MovementGroupSpawn, self).on_finished()
+        if self._after_movement is not None:
+            WorldHelper.append(self._after_movement)
+            self._after_movement.set_child(self.child)
 
 
 class MovmentClassic(Parent):
