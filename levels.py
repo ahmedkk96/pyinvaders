@@ -19,40 +19,59 @@ class Waves:
     Static structure for holding waves information,
     '''
 
-    def _create_classic_group():
-            mover = gameobjects.MovmentClassic()
-            shooter = gameobjects.ShooterPeriodic()
-            enemy_group = gameobjects.EnemyRect()
-            return EnemyTemplate(enemy_group,
-                                 mover,
-                                 shooter)
+    def _classic_group():
+        mover = gameobjects.MovmentClassic()
+        egt = Waves._static_group()
+        egt.mover = mover
+        return egt
+
+    def _static_group():
+        shooter = gameobjects.ShooterPeriodic()
+        enemy_group = gameobjects.EnemyRect()
+        return EnemyTemplate(enemy_group,
+                             None,
+                             shooter)
+
+    def _enemy_at(pos, type, *params):
+        enemy = type(*params)
+        enemy.set_pos(pos)
+        return enemy
+
+    def _join_enemies(enemies):
+        eg = gameobjects.EnemyGroup()
+        for e in enemies:
+            eg.append(e)
+
+        return eg
 
     def wave_1(player):
-        egt = Waves._create_classic_group()
-        egt.enemy.set_pos((200, 100))
+        egt = Waves._classic_group()
         egt.enemy.uniform_rectangle(7, 3, gameobjects.Enemy)
+        egt.enemy.center_hor()
+        egt.enemy.set_top(100)
         egt.setup()
         return [egt]
 
     def wave_2(player):
-        egt = Waves._create_classic_group()
+        egt = Waves._classic_group()
         egt.enemy.mixed_rows(7, [gameobjects.Enemy] * 3 +
                                 [gameobjects.Enemy2])
-        # egt.mover.speed_x *= 1.4
+        egt.enemy.center_hor()
+        egt.enemy.set_top(100)
         egt.setup()
         return [egt]
 
     def wave_3(player):
         eg = gameobjects.EnemyGroup()
         for x in range(0, 4):
-            enemy = gameobjects.EnemyTargtedBullet(player)
-            pos = (200 + x * 200, 100)
-            enemy.set_pos(pos)
+            enemy = Waves._enemy_at((x * 200, 0),
+                                    gameobjects.EnemyTargtedBullet, player)
             eg.append(enemy)
 
-        pos = eg.get_pos()
-        move = gameobjects.MovementLinear(1, (pos.x, pos.y),
-                                          (pos.x+200, pos.y))
+        eg.center_hor()
+        eg.set_top(100)
+        move = gameobjects.MovementLinear(1.5, (-100, 0),
+                                          (100, 0))
         move.loop = True
         shoot = gameobjects.ShooterPeriodic()
         shoot.set_interval(0.5)
@@ -62,17 +81,14 @@ class Waves:
 
     def wave_4(player):
         eg, es = Waves.wave_5(player)
-        es.enemy.on_removed_event.remove(es.mover.on_child_removed)
+        es.mover.unset_child()
         es.mover = None
         return [eg, es]
 
     def wave_5(player):
         es = Waves.wave_3(player)
         eg = Waves.wave_2(player)
-        pos = eg[0].enemy.get_pos()
-        pos.y += 150
-        eg[0].enemy.set_pos(pos)
-        eg[0].mover.set_child(eg[0].enemy)
+        eg[0].enemy.set_top(150)
         eg[0].mover.speed_x = 150
         eg[0].mover.step_y = 0
 
@@ -94,4 +110,6 @@ class Waves:
                      Waves.wave_3, Waves.wave_4,
                      Waves.wave_5, Waves.wave_6]
 
+        if wave_number > len(wave_list):
+            return []
         return wave_list[wave_number-1](player)

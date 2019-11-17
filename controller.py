@@ -134,10 +134,10 @@ class Controller:
         self._player.set_pos(mouse_pos)
 
     def inc_sim_speed(self):
-        self._updater.time_scale += 1
+        self._updater.time_scale *= 2
 
     def dec_sim_speed(self):
-        self._updater.time_scale -= 1
+        self._updater.time_scale /= 2
 
     def test(self):
         mg = gameobjects.MeteorGenerator(10)
@@ -236,17 +236,17 @@ class EnemySpwaner:
         self._game_state = game_state
 
         self.enemies = []
-        self.wave_index = 1
+        self.next_wave_index = 1
         self.spawn_wave()
 
     def spawn_wave(self):
-        enemies = Waves.create_wave(self.wave_index, self._player)
+        enemies = Waves.create_wave(self.next_wave_index, self._player)
 
         if len(enemies) > 0:
             for etemp in enemies:
                 self._add_enemy_temp(etemp)
 
-        self.wave_index += 1
+        self.next_wave_index += 1
 
     def on_child_removed(self, child):
         self.enemies.remove(child)
@@ -254,7 +254,7 @@ class EnemySpwaner:
             self.spawn_wave()
 
     def reset(self):
-        self.wave_index = 1
+        self.next_wave_index = 1
             # I don't want world to notify me
         for enemy in self.enemies:
             enemy.on_removed_event.clear()

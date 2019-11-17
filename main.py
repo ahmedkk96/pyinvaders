@@ -73,6 +73,7 @@ def debug(dt):
     debugger.add(str(fps))
     debugger.add('Mouse X = {}'.format(mouse_x))
     debugger.add('Mouse Y = {}'.format(mouse_y))
+    debugger.add('wave_number: {}'.format(game.spawner.next_wave_index-1))
 
     dic = game.world.get_main_dic().items()
     for type_name, array in dic:

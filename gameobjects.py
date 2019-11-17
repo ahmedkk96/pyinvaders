@@ -130,6 +130,7 @@ class Background(Sprite):
 
 class GameObject:
     OBJECT_TYPE = ''
+    COLLISION_SCALE = 0.75
 
     def __init__(self):
         self._pos = Vector2(0, 0)
@@ -145,7 +146,8 @@ class GameObject:
         pass
 
     def get_rect(self):
-        return Rect_From_Center(self._pos, self._size)
+        return Rect_From_Center(self._pos, (self._size[0] * self.COLLISION_SCALE,
+                                            self._size[1] * self.COLLISION_SCALE))
 
     def collides(self, other):
         return self.get_rect().colliderect(other.get_rect())
@@ -522,6 +524,17 @@ class EnemyGroup(GameObject):
         super(EnemyGroup, self).on_world_remove()
         self.clear()
 
+    def center_hor(self):
+        rect = self.get_rect()
+        my_x = rect.center[0]
+        sc_x = WorldHelper.screen_rect.width / 2
+        self._update_pos((sc_x - my_x, 0))
+
+    def set_top(self, y):
+        rect = self.get_rect()
+        my_top = rect.top
+        self._update_pos((0, y - my_top))
+
 
 class EnemyRect(EnemyGroup):
     def _create_enemy(self, type, offset):
@@ -566,10 +579,14 @@ class Parent(GameObject):
         self.child = None
 
     def set_child(self, child):
-        if self.child is not None:
-            self.child.on_removed_event.remove(self.on_child_removed)
+        self.unset_child()
         self.child = child
         self.child.on_removed_event.append(self.on_child_removed)
+
+    def unset_child(self):
+        if self.child is not None:
+            self.child.on_removed_event.remove(self.on_child_removed)
+            self.child = None
 
     def on_child_removed(self, child):
         self.child = None
@@ -667,24 +684,27 @@ class MovementBezier(MovementPath):
 
 
 class MovementCompound(MovementPath):
-    def __init__(self, movements):
-        time = 0
-        for move in movements:
-            time += move.get_total_time()
-        super(MovementCompound, self).__init__(time)
-        self._moves = movements
+    def __init__(self):
+        super(MovementCompound, self).__init__(0)
+        self._moves = []
+
+    def append(self, move):
+        self._time += move.get_total_time()
+        self._moves.append(move)
+
+    def get_current_movement(self):
+        t = self.t * self._time  # convert normalized time
+        end_time = 0
+        for move in self._moves:
+            start_time = end_time  # starting time of this move
+            end_time += move.get_total_time()
+            if t <= end_time:  # if t is in between start and end
+                move.set_abs_time(t - start_time)
+                return move
 
     def get_current(self):
-        cum_time = 0  # Add each animation total time
-        t = self.t * self._time  # convert normalized time
-        for move in self._moves:
-            last_time = cum_time  # starting time of this move
-            cum_time += move.get_total_time()  # ending time
-            if t <= cum_time:  # if t is in between start and end
-                # set move.t to (current time) - (starting time)
-                # which means convert global time to local
-                move.t = (t - last_time) / move.get_total_time()
-                return move.get_current()
+        move = self.get_current_movement()
+        return move.get_current()
 
 
 class MovementAccelDown(Parent):
@@ -709,7 +729,7 @@ class MovementGroupSpawn(MovementPath):
     ONE_CURVE_TIME = 1
 
     def __init__(self):
-        super(MovementGroupSpawn, self).__init__(-1)
+        super(MovementGroupSpawn, self).__init__(0)
         self._after_movement = None
 
     def set_child(self, child):
@@ -732,37 +752,36 @@ class MovementGroupSpawn(MovementPath):
 
         index = 0
         for e in self.child.all_enemies:
-            end_pos = e.get_pos()
-
             delay = index * self.DELAY
+
+            end_pos = e.get_pos()
             index += 1
 
             bezier = MovementBezier(self.ONE_CURVE_TIME,
                                     self.STARTING_POS,
                                     (end_pos[0], self.STARTING_POS[1]),
                                     end_pos)
-            bezier.delay = delay
 
-            e.group_curve = bezier
-            e.set_pos(self.STARTING_POS)
+            e.bezier = bezier
+            bezier.delay = delay
+            # e.set_pos(self.STARTING_POS)
 
     def update(self, dt):
         self.seek(dt)
         for e in self.child.all_enemies:
-            bezier = e.group_curve
-            delay = bezier.delay
-            end_time = delay + bezier.get_total_time()
+            bezier = e.bezier
 
-            abs_time = self.t * self._time
-            t = 0
-            if abs_time > end_time:
-                t = bezier.get_total_time()
-            elif abs_time < delay:
-                t = 0
+            start_time = bezier.delay
+            end_time = start_time + bezier.get_total_time()
+
+            t = self.t * self._time
+            if t < start_time:
+                bezier.t = 0
+            elif t > end_time:
+                bezier.t = 1
             else:
-                t = abs_time - delay
+                bezier.set_abs_time(t - start_time)
 
-            bezier.set_abs_time(t)
             e.set_pos(bezier.get_current())
 
     def on_finished(self):
@@ -772,11 +791,10 @@ class MovementGroupSpawn(MovementPath):
             self._after_movement.set_child(self.child)
 
 
-class MovmentClassic(Parent):
-    OBJECT_TYPE = 'movement'
+class MovmentClassic(Movement):
     SPEED_X = 100
     STEP_Y = 60
-    PADDING_X = 30
+    PADDING_X = 50
     LOWER_LIMIT = 720
 
     def __init__(self):
@@ -800,16 +818,18 @@ class MovmentClassic(Parent):
         if not self.dir:
             offset_x *= -1
         offset_y = 0
-        sc = WorldHelper.screen_rect
+        sc = pygame.rect.Rect(WorldHelper.screen_rect)
+        sc.width -= self.PADDING_X * 2
+        sc.left = self.PADDING_X
 
-        if self._right + offset_x > sc.width:
-            offset_x = sc.width - self._right
+        if self._right + offset_x > sc.right:
+            offset_x = sc.right - self._right
             offset_y = self.step_y
             self.check_under_screen(offset_y)
             self.dir = False
 
-        if self._left + offset_x < 0:
-            offset_x = -self._left
+        if self._left + offset_x < sc.left:
+            offset_x = sc.left-self._left
             offset_y = self.step_y
             self.check_under_screen(offset_y)
             self.dir = True
